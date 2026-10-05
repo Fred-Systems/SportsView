@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Bundle
 import android.webkit.*
+import androidx.webkit.WebViewAssetLoader
 import android.view.WindowManager
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -21,14 +22,16 @@ class MainActivity : Activity() {
   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   web=WebView(this)
   web.settings.apply { javaScriptEnabled=true; domStorageEnabled=true; mediaPlaybackRequiresUserGesture=true; allowFileAccess=false; allowContentAccess=false; mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW }
+  val assetLoader = WebViewAssetLoader.Builder().addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
   web.webViewClient=object:WebViewClient(){
+   override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=assetLoader.shouldInterceptRequest(request.url)
    override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
     val u=request.url.toString()
-    return !(u.startsWith("https://www.youtube.com/embed/") || u.startsWith("https://www.youtube-nocookie.com/embed/") || u.startsWith("https://www.youtube.com/iframe_api") || u.startsWith("https://www.youtube-nocookie.com/") || u.startsWith("https://i.ytimg.com/") || u.startsWith("https://s.ytimg.com/") || u=="file:///android_asset/index.html")
+    return !(u.startsWith("https://www.youtube.com/embed/") || u.startsWith("https://www.youtube-nocookie.com/embed/") || u.startsWith("https://www.youtube.com/iframe_api") || u.startsWith("https://www.youtube-nocookie.com/") || u.startsWith("https://i.ytimg.com/") || u.startsWith("https://s.ytimg.com/") || u=="https://appassets.androidplatform.net/assets/index.html")
    }
   }
   web.addJavascriptInterface(YouTubeBridge(),"Android")
-  web.loadUrl("file:///android_asset/index.html")
+  web.loadUrl("https://appassets.androidplatform.net/assets/index.html")
   setContentView(web)
  }
 
