@@ -4,6 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.ComponentName
+import android.content.pm.PackageManager
+import android.content.SharedPreferences
+import java.security.MessageDigest
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -25,6 +29,9 @@ class MainActivity : Activity() {
  private var customView: View?=null
  private var customViewCallback: WebChromeClient.CustomViewCallback?=null
  private var normalSystemUi=0
+ private val prefs: SharedPreferences by lazy { getSharedPreferences("sportsview_security", MODE_PRIVATE) }
+ private val calculatorAlias = ComponentName(packageName, packageName + ".CalculatorAlias")
+ private val mainLauncher = ComponentName(this, MainActivity::class.java)
 
  @SuppressLint("SetJavaScriptEnabled")
  override fun onCreate(savedInstanceState:Bundle?) {
@@ -164,6 +171,60 @@ class MainActivity : Activity() {
    try {
     startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
    }catch(_:Exception){}
+  }
+
+  @JavascriptInterface
+  fun isCalculatorLaunch():Boolean =
+   intent.component?.className == calculatorAlias.className
+
+  @JavascriptInterface
+  fun setCalculatorLauncher(enabled:Boolean) {
+   runOnUiThread { setLauncherComponents(enabled) }
+  }
+
+  @JavascriptInterface
+  fun saveCalculatorCode(code:String):Boolean {
+   val clean=code.trim()
+   if(clean.length<4 || clean.length>12 || !clean.all{it.isDigit()}) return false
+   prefs.edit().putString("calculator_code_hash",hashCode(clean)).apply()
+   return true
+  }
+
+  @JavascriptInterface
+  fun hasCalculatorCode():Boolean =
+   !prefs.getString("calculator_code_hash",null).isNullOrBlank()
+
+  @JavascriptInterface
+  fun verifyCalculatorCode(code:String):Boolean {
+   val saved=prefs.getString("calculator_code_hash",null) ?: return false
+   return saved==hashCode(code.trim())
+  }
+
+  @JavascriptInterface
+  fun openSportsView() {
+   runOnUiThread {
+    setLauncherComponents(false)
+    web.evaluateJavascript("window.exitCalculatorMode&&window.exitCalculatorMode()",null)
+   }
+  }
+
+  private fun hashCode(value:String):String {
+   val digest=MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
+   return digest.joinToString("") { "%02x".format(it) }
+  }
+
+  private fun setLauncherComponents(calculator:Boolean) {
+   val pm=packageManager
+   pm.setComponentEnabledSetting(
+    mainLauncher,
+    if(calculator) PackageManager.COMPONENT_ENABLED_STATE_DISABLED else PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+    PackageManager.DONT_KILL_APP
+   )
+   pm.setComponentEnabledSetting(
+    calculatorAlias,
+    if(calculator) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+    PackageManager.DONT_KILL_APP
+   )
   }
 
   @JavascriptInterface
