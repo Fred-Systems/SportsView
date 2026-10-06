@@ -2,6 +2,7 @@ package com.fredsystems.sportsviewer
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -11,6 +12,9 @@ import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
+import android.text.InputType
+import android.widget.EditText
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -33,6 +37,7 @@ class MainActivity : Activity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.webViewClient = WebViewClient()
+        webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(AppBridge(), "Android")
         setContentView(webView)
         webView.loadUrl("file:///android_asset/index.html")
@@ -46,7 +51,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) fetchNflFeed() else throw e
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) { try { httpGet(buildApiUrl("/videos", "football", null, null)) } catch (_: Exception) { fetchNflFeed() } } else throw e
                     }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -62,7 +67,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/search", league.lowercase(), pageToken, query))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) searchNflFeed(query) else throw e
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) { try { httpGet(buildApiUrl("/search", "football", null, query)) } catch (_: Exception) { searchNflFeed(query) } } else throw e
                     }
                     send("window.receiveSearchResults(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -121,7 +126,7 @@ class MainActivity : Activity() {
                     val tag = json.optString("tag_name", "unknown")
                     val name = json.optString("name", tag)
                     val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
-                    val current = "v1.7.0"
+                    val current = "v" + BuildConfig.VERSION_NAME
                     val result = JSONObject().apply {
                         put("tag", tag)
                         put("name", name)
@@ -134,6 +139,39 @@ class MainActivity : Activity() {
                     val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
                     send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
                 }
+            }
+        }
+
+        @JavascriptInterface fun configureCalculator() {
+            runOnUiThread {
+                val input = EditText(this@MainActivity).apply {
+                    inputType = InputType.TYPE_CLASS_NUMBER
+                    hint = "4–12 digit code"
+                    setSingleLine(true)
+                    filters = arrayOf(android.text.InputFilter.LengthFilter(12))
+                    setPadding(32, 20, 32, 20)
+                }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Calculator mode")
+                    .setMessage("Set the code that opens SportsView from the Calculator.")
+                    .setView(input)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Save") { _, _ ->
+                        val code = input.text.toString()
+                        if (!code.matches(Regex("\\d{4,12}"))) {
+                            AlertDialog.Builder(this@MainActivity).setTitle("Invalid code").setMessage("Use 4–12 digits.").setPositiveButton("OK", null).show()
+                        } else if (saveCalculatorCode(code)) {
+                            setCalculatorLauncher(true)
+                            send("window.closeSettings(); window.showCalculator();")
+                        }
+                    }.show()
+            }
+        }
+
+        @JavascriptInterface fun disableCalculatorMode() {
+            runOnUiThread {
+                setCalculatorLauncher(false)
+                send("window.closeSettings();")
             }
         }
 
