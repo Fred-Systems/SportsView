@@ -11,8 +11,8 @@ android {
         applicationId = "com.fredsystems.sportsviewer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.1"
+        versionCode = 2
+        versionName = "1.2"
     }
 
     compileOptions {
@@ -24,8 +24,24 @@ android {
         jvmToolchain(17)
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.keystore")
+            storePassword = System.getenv("SPORTSVIEW_KEYSTORE_PASSWORD") ?: error("SPORTSVIEW_KEYSTORE_PASSWORD is missing")
+            keyAlias = "sportsview"
+            keyPassword = System.getenv("SPORTSVIEW_KEY_PASSWORD") ?: error("SPORTSVIEW_KEY_PASSWORD is missing")
+        }
+    }
+
     buildFeatures { buildConfig = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
+
+    buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = false
+        }
+    }
 }
 
 dependencies {
