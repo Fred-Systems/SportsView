@@ -29,3 +29,7 @@ android {
     buildFeatures { buildConfig = true }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 }
+
+dependencies {
+    implementation("androidx.webkit:webkit:1.12.1")
+}
