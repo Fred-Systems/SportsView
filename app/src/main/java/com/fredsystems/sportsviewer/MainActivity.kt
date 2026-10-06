@@ -2,13 +2,16 @@ package com.fredsystems.sportsviewer
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.DownloadManager
 import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
 import android.os.Bundle
+import android.os.Environment
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -123,21 +126,75 @@ class MainActivity : Activity() {
                 try {
                     val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest", "application/vnd.github+json")
                     val json = JSONObject(data)
-                    val tag = json.optString("tag_name", "unknown")
+                    val tag = json.optString("tag_name", "")
                     val name = json.optString("name", tag)
                     val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
                     val current = "v" + BuildConfig.VERSION_NAME
+                    val apkUrl = "https://github.com/Fred-Systems/SportsViewer/releases/download/" + Uri.encode(tag) + "/app-release.apk"
                     val result = JSONObject().apply {
                         put("tag", tag)
                         put("name", name)
                         put("url", url)
+                        put("apkUrl", apkUrl)
                         put("current", current)
-                        put("updateAvailable", tag != current && tag.isNotBlank())
+                        put("updateAvailable", tag.isNotBlank() && tag != current)
                     }
                     send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
                 } catch (e: Exception) {
                     val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
                     send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
+                }
+            }
+        }
+
+        @JavascriptInterface fun downloadAndInstall(apkUrl: String, tag: String) {
+            executor.execute {
+                try {
+                    val request = DownloadManager.Request(Uri.parse(apkUrl))
+                        .setTitle("SportsView $tag")
+                        .setDescription("Downloading the SportsView update")
+                        .setMimeType("application/vnd.android.package-archive")
+                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "SportsView-$tag.apk")
+                    val manager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+                    val id = manager.enqueue(request)
+                    var finished = false
+                    var error = false
+                    while (!finished && !error) {
+                        Thread.sleep(500)
+                        val cursor = manager.query(DownloadManager.Query().setFilterById(id))
+                        cursor.use {
+                            if (it.moveToFirst()) {
+                                when (it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))) {
+                                    DownloadManager.STATUS_SUCCESSFUL -> finished = true
+                                    DownloadManager.STATUS_FAILED -> error = true
+                                }
+                            }
+                        }
+                    }
+                    if (error) throw IllegalStateException("Download failed")
+                    val uri = manager.getUriForDownloadedFile(id)
+                        ?: throw IllegalStateException("Downloaded APK could not be opened")
+                    runOnUiThread {
+                        try {
+                            startActivity(Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(uri, "application/vnd.android.package-archive")
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                            })
+                        } catch (e: Exception) {
+                            AlertDialog.Builder(this@MainActivity)
+                                .setTitle("Allow APK installation")
+                                .setMessage("Android is blocking app installation from SportsView. Open the permission page, allow it, then tap Install now again.")
+                                .setNegativeButton("Cancel", null)
+                                .setPositiveButton("Open settings") { _, _ ->
+                                    try {
+                                        startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                                    } catch (_: Exception) {}
+                                }.show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    send("window.receiveUpdateInstallError(" + JSONObject.quote(e.message ?: "Could not download the update.") + ");")
                 }
             }
         }
