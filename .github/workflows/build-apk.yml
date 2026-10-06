@@ -44,6 +44,22 @@ jobs:
           SPORTSVIEW_KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
 
+      - name: Verify release APK and launcher configuration
+        run: |
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          test "$(stat -c%s "$APK")" -gt 500000
+          echo "APK size: $(stat -c%s "$APK") bytes"
+          echo "Checking packaged launcher entries..."
+          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -n 1)"
+          "$BUILD_TOOLS/aapt2" dump badging "$APK" | grep -F "com.fredsystems.sportsviewer.MainActivity"
+          "$BUILD_TOOLS/aapt2" dump badging "$APK" | grep -F "com.fredsystems.sportsviewer.CalculatorAlias"
+          echo "Source launcher safety checks..."
+          grep -F 'android:enabled="true"' app/src/main/AndroidManifest.xml
+          grep -F 'android:enabled="false"' app/src/main/AndroidManifest.xml
+          grep -F 'calculator_mode_enabled' app/src/main/java/com/fredsystems/sportsviewer/MainActivity.kt
+          echo "Startup hardening checks passed."
+
       - uses: actions/upload-artifact@v4
         with:
           name: SportsView-release-apk
@@ -53,8 +69,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v1.5" app/build/outputs/apk/release/*.apk \
+          gh release create "v1.6" app/build/outputs/apk/release/*.apk \
             --title "SportsView 1.5" \
             --notes "SportsView 1.5: polished UI, calculator mode, manual landscape video mode, and stability improvements." \
             --latest || \
-          gh release upload "v1.5" app/build/outputs/apk/release/*.apk --clobber
+          gh release upload "v1.6" app/build/outputs/apk/release/*.apk --clobber
