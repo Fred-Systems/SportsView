@@ -110,7 +110,7 @@ class MainActivity : Activity() {
      }
      val body=c.inputStream.bufferedReader().use{it.readText()}
      c.disconnect()
-     val safe=body.replace("\","\\").replace("'","\'")
+     val safe=body.replace("\\","\\\\").replace("'","\\'")
      send("window.receiveVideos('$safe')")
     }catch(e:Exception){
      send("window.appApiError("+JSONObject.quote(e.message?:"Unable to load videos")+")")
