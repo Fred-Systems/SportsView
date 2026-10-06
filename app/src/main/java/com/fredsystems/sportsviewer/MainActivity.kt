@@ -16,6 +16,7 @@ import android.util.Xml
 import android.webkit.*
 import android.widget.FrameLayout
 import androidx.webkit.WebViewAssetLoader
+import androidx.webkit.WebViewClientCompat
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -38,15 +39,8 @@ class MainActivity : Activity() {
   super.onCreate(savedInstanceState)
   requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-  val calculatorEnabled=prefs.getBoolean("calculator_mode_enabled",false)
-  if(!calculatorEnabled){
-   packageManager.setComponentEnabledSetting(
-    mainLauncher,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP
-   )
-   packageManager.setComponentEnabledSetting(
-    calculatorAlias,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP
-   )
-  }
+  // SportsView is the normal launcher by manifest. Do not change launcher
+  // component state during startup. Calculator mode is changed only by Settings.
   normalSystemUi=window.decorView.systemUiVisibility
   web=WebView(this)
   web.settings.apply {
@@ -63,7 +57,7 @@ class MainActivity : Activity() {
    .addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this))
    .build()
 
-  web.webViewClient=object:WebViewClient(){
+  web.webViewClient=object:WebViewClientCompat(){
    override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=
     assetLoader.shouldInterceptRequest(request.url)
 
@@ -79,28 +73,7 @@ class MainActivity : Activity() {
     return !allowed
    }
 
-   override fun onRenderProcessGone(view:WebView,detail:RenderProcessGoneDetail):Boolean {
-    runOnUiThread {
-     try {
-      (view.parent as? android.view.ViewGroup)?.removeView(view)
-      view.destroy()
-     }catch(_:Exception){}
-     val message=if(detail.didCrash())
-      "SportsView's video/web renderer stopped unexpectedly. The app is still running."
-     else
-      "SportsView's web renderer was stopped by Android to recover memory."
-     val fallback=android.widget.TextView(this@MainActivity).apply{
-      text=message+"\n\nPlease reopen SportsView. Your app data is safe."
-      textSize=16f
-      setTextColor(android.graphics.Color.WHITE)
-      setBackgroundColor(android.graphics.Color.rgb(6,9,18))
-      gravity=android.view.Gravity.CENTER
-      setPadding(48,48,48,48)
-     }
-     setContentView(fallback)
-    }
-    return true
-   }
+
   }
 
   web.webChromeClient=object:WebChromeClient(){
