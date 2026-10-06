@@ -3,6 +3,12 @@ package com.fredsystems.sportsviewer
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.app.DownloadManager
+import android.content.Context
+import android.os.Environment
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.FileProvider
 import android.content.pm.ActivityInfo
 import android.content.ComponentName
 import android.content.pm.PackageManager
@@ -228,35 +234,64 @@ class MainActivity : Activity() {
   }
 
   @JavascriptInterface
-  fun checkForUpdates() {
+  fun checkForUpdates(automatic:Boolean) {
    executor.execute {
     try {
-     val c=(URL(
-      "https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest"
-     ).openConnection() as HttpURLConnection).apply{
-      requestMethod="GET"
-      connectTimeout=10000
-      readTimeout=15000
-      setRequestProperty("Accept","application/vnd.github+json")
-      setRequestProperty("User-Agent","SportsView/1.4")
+     val c=(URL("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest").openConnection() as HttpURLConnection).apply{
+      requestMethod="GET";connectTimeout=10000;readTimeout=15000
+      setRequestProperty("Accept","application/vnd.github+json");setRequestProperty("User-Agent","SportsView/1.5")
      }
-     val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()})
+     val code=c.responseCode
+     val body=(if(code in 200..299)c.inputStream else c.errorStream).bufferedReader().use{it.readText()}
      c.disconnect()
-     val out=JSONObject().apply{
-      put("tag",j.optString("tag_name",""))
-      put("url",j.optString("html_url",""))
-      put("name",j.optString("name","Latest release"))
-     }
+     if(code !in 200..299) throw IllegalStateException("GitHub returned HTTP $code")
+     val j=JSONObject(body);val assets=j.optJSONArray("assets") ?: JSONArray()
+     var apkUrl="";var apkName=""
+     for(i in 0 until assets.length()){val x=assets.optJSONObject(i) ?: continue;val n=x.optString("name","");if(n.lowercase().endsWith(".apk")){apkUrl=x.optString("browser_download_url","");apkName=n;break}}
+     val out=JSONObject().apply{put("tag",j.optString("tag_name",""));put("url",j.optString("html_url",""));put("name",j.optString("name","Latest release"));put("apkUrl",apkUrl);put("apkName",apkName);put("currentVersion",BuildConfig.VERSION_NAME);put("automatic",automatic)}
      send("window.receiveUpdateCheck("+JSONObject.quote(out.toString())+");")
-    }catch(e:Exception){
-     send(
-      "window.receiveUpdateCheck("+
-      JSONObject.quote("{\"error\":\"No public release is available yet.\"}")+
-      ");"
-     )
-    }
+    }catch(e:Exception){send("window.receiveUpdateCheck("+JSONObject.quote(JSONObject().put("error","Could not check for updates right now.").put("automatic",automatic).toString())+");")}
    }
   }
+
+  @JavascriptInterface
+  fun downloadUpdate(apkUrl:String,installAfter:Boolean) {
+   try {
+    val request=DownloadManager.Request(Uri.parse(apkUrl)).setTitle("SportsView update").setDescription("Downloading the latest SportsView APK").setMimeType("application/vnd.android.package-archive").setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED).setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"SportsView-update.apk")
+    val manager=getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val id=manager.enqueue(request)
+    prefs.edit().putLong("update_download_id",id).apply()
+    executor.execute{monitorDownload(id,installAfter)}
+   }catch(e:Exception){send("window.updateDownloadProgress(0,false,"+JSONObject.quote("Could not start the download.")+","+installAfter+");")}
+  }
+
+  private fun monitorDownload(id:Long,installAfter:Boolean) {
+   val manager=getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+   while(true){
+    try {
+     val c=manager.query(DownloadManager.Query().setFilterById(id))
+     if(!c.moveToFirst()){c.close();send("window.updateDownloadProgress(0,false,"+JSONObject.quote("Download could not be found.")+","+installAfter+");");return}
+     val status=c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));val done=c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));val total=c.getLong(c.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));c.close()
+     val percent=if(total>0)(done*100.0/total).toInt() else 0
+     if(status==DownloadManager.STATUS_SUCCESSFUL){send("window.updateDownloadProgress(100,true,null,"+installAfter+");");if(installAfter)runOnUiThread{installDownloadedUpdate()};return}
+     if(status==DownloadManager.STATUS_FAILED){send("window.updateDownloadProgress("+percent+",false,"+JSONObject.quote("The APK download failed. Please try again.")+","+installAfter+");");return}
+     send("window.updateDownloadProgress("+percent+",false,null,"+installAfter+");");Thread.sleep(500)
+    }catch(e:Exception){send("window.updateDownloadProgress(0,false,"+JSONObject.quote("The APK download stopped unexpectedly.")+","+installAfter+");");return}
+   }
+  }
+
+  @JavascriptInterface
+  fun installDownloadedUpdate() {
+   val id=prefs.getLong("update_download_id",-1L)
+   if(id<0){send("window.updateDownloadProgress(0,false,"+JSONObject.quote("No downloaded APK is available.")+",true);");return}
+   try {
+    if(Build.VERSION.SDK_INT>=26 && !packageManager.canRequestPackageInstalls()){startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:$packageName")));send("window.updateDownloadProgress(100,false,"+JSONObject.quote("Allow SportsView to install updates, then tap Update now again.")+",true);");return}
+    val manager=getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val uri=manager.getUriForDownloadedFile(id) ?: throw IllegalStateException("Downloaded APK is not ready.")
+    startActivity(Intent(Intent.ACTION_VIEW).apply{setDataAndType(uri,"application/vnd.android.package-archive");addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)})
+   }catch(e:Exception){send("window.updateDownloadProgress(100,false,"+JSONObject.quote("Could not open the Android installer.")+",true);")}
+  }
+
 
   private fun buildApiUrl(
    endpoint:String,
