@@ -135,6 +135,21 @@ class MainActivity : Activity() {
      val data=httpGet(url)
      send("window.receiveSearchResults("+JSONObject.quote(data)+");")
     }catch(e:Exception){
+     if(sport=="nfl"){
+      try{
+       val fallback=JSONObject(fallbackNflFeed())
+       val all=fallback.optJSONArray("videos") ?: JSONArray()
+       val q=query.trim().lowercase()
+       val filtered=JSONArray()
+       for(i in 0 until all.length()){
+        val item=all.optJSONObject(i)
+        if(item!=null && item.optString("title").lowercase().contains(q)) filtered.put(item)
+       }
+       fallback.put("videos",filtered)
+       send("window.receiveSearchResults("+JSONObject.quote(fallback.toString())+");")
+       return@execute
+      }catch(_:Exception){}
+     }
      send(
       "window.appApiError("+
       JSONObject.quote("Search failed. "+(e.message?:"Please try again."))+
