@@ -162,7 +162,8 @@ class MainActivity : Activity() {
                             AlertDialog.Builder(this@MainActivity).setTitle("Invalid code").setMessage("Use 4–12 digits.").setPositiveButton("OK", null).show()
                         } else if (saveCalculatorCode(code)) {
                             setCalculatorLauncher(true)
-                            send("window.closeSettings(); window.showCalculator();")
+                            startActivity(Intent(this@MainActivity, CalculatorActivity::class.java))
+                            finish()
                         }
                     }.show()
             }
