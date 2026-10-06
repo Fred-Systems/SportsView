@@ -5,15 +5,12 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.util.Xml
 import android.view.View
 import android.view.WindowManager
 import android.webkit.*
 import android.widget.FrameLayout
 import androidx.webkit.WebViewAssetLoader
-import org.json.JSONArray
 import org.json.JSONObject
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -41,75 +38,202 @@ class MainActivity : Activity() {
    mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
    userAgentString=userAgentString+" SportsView/1.2"
   }
-  val assetLoader=WebViewAssetLoader.Builder().addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this)).build()
+
+  val assetLoader=WebViewAssetLoader.Builder()
+   .addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this))
+   .build()
+
   web.webViewClient=object:WebViewClient(){
-   override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=assetLoader.shouldInterceptRequest(request.url)
+   override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=
+    assetLoader.shouldInterceptRequest(request.url)
+
    override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
     val u=request.url.toString()
-    val allowed=u.startsWith("https://www.youtube.com/") || u.startsWith("https://www.youtube-nocookie.com/") || u.startsWith("https://i.ytimg.com/") || u.startsWith("https://s.ytimg.com/") || u=="https://appassets.androidplatform.net/assets/index.html"
+    val allowed=
+     u.startsWith("https://www.youtube.com/") ||
+     u.startsWith("https://www.youtube-nocookie.com/") ||
+     u.startsWith("https://i.ytimg.com/") ||
+     u.startsWith("https://s.ytimg.com/") ||
+     u.startsWith("https://sportsview-api.nextext-app.workers.dev/") ||
+     u=="https://appassets.androidplatform.net/assets/index.html"
     return !allowed
    }
   }
+
   web.webChromeClient=object:WebChromeClient(){
    override fun onShowCustomView(view:View,callback:CustomViewCallback){
     if(customView!=null){callback.onCustomViewHidden();return}
-    customView=view;customViewCallback=callback
-    (web.parent as? android.view.ViewGroup)?.addView(view,FrameLayout.LayoutParams(-1,-1))
+    customView=view
+    customViewCallback=callback
+    (web.parent as? android.view.ViewGroup)?.addView(
+     view,
+     FrameLayout.LayoutParams(-1,-1)
+    )
     web.visibility=View.GONE
-    window.decorView.systemUiVisibility=View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    window.decorView.systemUiVisibility=
+     View.SYSTEM_UI_FLAG_FULLSCREEN or
+     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
    }
+
    override fun onHideCustomView(){hideCustomView()}
   }
+
   web.addJavascriptInterface(AppBridge(),"Android")
   setContentView(web)
-  web.loadUrl("https://appassets.androidplatform.net/assets/index.html", mapOf("Referer" to "https://com.fredsystems.sportsviewer/"))
+
+  web.loadUrl(
+   "https://appassets.androidplatform.net/assets/index.html",
+   mapOf("Referer" to "https://com.fredsystems.sportsviewer/")
+  )
  }
 
  inner class AppBridge {
-  @JavascriptInterface fun loadVideos(league:String) {
+  @JavascriptInterface
+  fun loadVideos(league:String,pageToken:String?) {
    executor.execute {
     try {
-     val channel=when(league.uppercase()){"NBA"->"UCWJ2lWNubArHWmf3FIHbfcQ";"NFL"->"UCDVYQ4Zhbm3S2dlz7P1xGg";"MLB"->"UCoLrcjPV5PbUrUyXq5mjc_A";else->throw IllegalArgumentException("Unknown league")}
-     val url="https://www.youtube.com/feeds/videos.xml?channel_id="+URLEncoder.encode(channel,"UTF-8")
-     val c=(URL(url).openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=15000;readTimeout=20000;setRequestProperty("User-Agent","SportsView/1.2")}
-     val code=c.responseCode
-     if(code !in 200..299) throw IllegalStateException("YouTube feed returned HTTP $code")
-     val data=parseFeed(c.inputStream);c.disconnect()
-     send("window.receiveVideos("+JSONObject.quote(data.toString())+");")
-    }catch(e:Exception){send("window.appApiError("+JSONObject.quote("Could not load the official $league video feed. "+(e.message?:"Please try again."))+");")}
+     val sport=league.lowercase()
+     val url=buildApiUrl("/videos",sport,pageToken,null)
+     val data=httpGet(url)
+     send("window.receiveVideos("+JSONObject.quote(data)+");")
+    }catch(e:Exception){
+     send(
+      "window.appApiError("+
+      JSONObject.quote("Could not load official $league videos. "+(e.message?:"Please try again."))+
+      ");"
+     )
+    }
    }
   }
-  @JavascriptInterface fun openUrl(url:String) { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch(_:Exception) {} }
-  @JavascriptInterface fun checkForUpdates() {
+
+  @JavascriptInterface
+  fun searchVideos(league:String,query:String,pageToken:String?) {
    executor.execute {
     try {
-     val c=(URL("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest").openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=10000;readTimeout=15000;setRequestProperty("Accept","application/vnd.github+json");setRequestProperty("User-Agent","SportsView/1.2")}
-     val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()});c.disconnect()
-     val out=JSONObject().apply{put("tag",j.optString("tag_name",""));put("url",j.optString("html_url",""));put("name",j.optString("name","Latest release"))}
+     val sport=league.lowercase()
+     val url=buildApiUrl("/search",sport,pageToken,query)
+     val data=httpGet(url)
+     send("window.receiveSearchResults("+JSONObject.quote(data)+");")
+    }catch(e:Exception){
+     send(
+      "window.appApiError("+
+      JSONObject.quote("Search failed. "+(e.message?:"Please try again."))+
+      ");"
+     )
+    }
+   }
+  }
+
+  @JavascriptInterface
+  fun openUrl(url:String) {
+   try {
+    startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
+   }catch(_:Exception){}
+  }
+
+  @JavascriptInterface
+  fun checkForUpdates() {
+   executor.execute {
+    try {
+     val c=(URL(
+      "https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest"
+     ).openConnection() as HttpURLConnection).apply{
+      requestMethod="GET"
+      connectTimeout=10000
+      readTimeout=15000
+      setRequestProperty("Accept","application/vnd.github+json")
+      setRequestProperty("User-Agent","SportsView/1.2")
+     }
+     val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()})
+     c.disconnect()
+     val out=JSONObject().apply{
+      put("tag",j.optString("tag_name",""))
+      put("url",j.optString("html_url",""))
+      put("name",j.optString("name","Latest release"))
+     }
      send("window.receiveUpdateCheck("+JSONObject.quote(out.toString())+");")
-    }catch(e:Exception){send("window.receiveUpdateCheck("+JSONObject.quote("{\"error\":\"No public release is available yet.\"}")+");")}
+    }catch(e:Exception){
+     send(
+      "window.receiveUpdateCheck("+
+      JSONObject.quote("{\"error\":\"No public release is available yet.\"}")+
+      ");"
+     )
+    }
    }
   }
-  private fun parseFeed(input:InputStream):JSONArray {
-   val out=JSONArray();val p=Xml.newPullParser();p.setInput(input,"UTF-8");var event=p.eventType;var inEntry=false;var id="";var title="";var published=""
-   while(event!=org.xmlpull.v1.XmlPullParser.END_DOCUMENT){
-    if(event==org.xmlpull.v1.XmlPullParser.START_TAG){when(p.name){"entry"->{inEntry=true;id="";title="";published=""};"videoId"->if(inEntry)id=p.nextText();"title"->if(inEntry)title=p.nextText();"published"->if(inEntry)published=p.nextText()}}
-    else if(event==org.xmlpull.v1.XmlPullParser.END_TAG && p.name=="entry" && inEntry){if(id.isNotBlank())out.put(JSONObject().apply{put("id",id);put("title",title);put("date",published);put("thumb","https://i.ytimg.com/vi/"+id+"/hqdefault.jpg")});inEntry=false}
-    event=p.next()
+
+  private fun buildApiUrl(
+   endpoint:String,
+   sport:String,
+   pageToken:String?,
+   query:String?
+  ):String {
+   val base="https://sportsview-api.nextext-app.workers.dev$endpoint"
+   val params=StringBuilder()
+   params.append("?sport=").append(URLEncoder.encode(sport,"UTF-8"))
+
+   if(!query.isNullOrBlank()){
+    params.append("&q=").append(URLEncoder.encode(query,"UTF-8"))
    }
-   return out
+
+   if(!pageToken.isNullOrBlank()){
+    params.append("&pageToken=").append(URLEncoder.encode(pageToken,"UTF-8"))
+   }
+
+   return base+params.toString()
   }
-  private fun send(js:String)=runOnUiThread{web.evaluateJavascript(js,null)}
+
+  private fun httpGet(url:String):String {
+   val c=(URL(url).openConnection() as HttpURLConnection).apply{
+    requestMethod="GET"
+    connectTimeout=15000
+    readTimeout=20000
+    setRequestProperty("Accept","application/json")
+    setRequestProperty("User-Agent","SportsView/1.2")
+   }
+
+   try{
+    val code=c.responseCode
+    val body=(if(code in 200..299)c.inputStream else c.errorStream)
+     .bufferedReader().use{it.readText()}
+
+    if(code !in 200..299){
+     val message=try{JSONObject(body).optString("error","HTTP $code")}
+      catch(_:Exception){"HTTP $code"}
+     throw IllegalStateException(message)
+    }
+
+    return body
+   }finally{
+    c.disconnect()
+   }
+  }
+
+  private fun send(js:String)=runOnUiThread{
+   web.evaluateJavascript(js,null)
+  }
  }
+
  private fun hideCustomView(){
   val view=customView ?: return
   (view.parent as? android.view.ViewGroup)?.removeView(view)
-  customView=null;customViewCallback?.onCustomViewHidden();customViewCallback=null
-  web.visibility=View.VISIBLE;window.decorView.systemUiVisibility=normalSystemUi
+  customView=null
+  customViewCallback?.onCustomViewHidden()
+  customViewCallback=null
+  web.visibility=View.VISIBLE
+  window.decorView.systemUiVisibility=normalSystemUi
  }
+
  override fun onBackPressed(){
-  if(customView!=null){hideCustomView();return}
-  if(web.canGoBack()){web.goBack();return}
+  if(customView!=null){
+   hideCustomView()
+   return
+  }
+  if(web.canGoBack()){
+   web.goBack()
+   return
+  }
   super.onBackPressed()
  }
 }
