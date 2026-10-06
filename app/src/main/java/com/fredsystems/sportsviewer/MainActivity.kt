@@ -139,7 +139,20 @@ class MainActivity : Activity() {
 
         private fun fetchNflFeed(): String {
             val feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCDVYQ4Zhbm3S2dlz7P1xGg"
-            val xml = httpGet(feedUrl)
+            val connection = URL(feedUrl).openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 15000
+            connection.readTimeout = 20000
+            connection.setRequestProperty("Accept", "application/atom+xml,application/xml,text/xml")
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 11) AppleWebKit/537.36 Chrome/83.0 Mobile Safari/537.36")
+            val xml = try {
+                val code = connection.responseCode
+                val body = (if (code in 200..299) connection.inputStream else connection.errorStream).bufferedReader().use { it.readText() }
+                if (code !in 200..299) throw IllegalStateException("HTTP $code")
+                body
+            } finally {
+                connection.disconnect()
+            }
             val factory = DocumentBuilderFactory.newInstance()
             factory.isNamespaceAware = true
             val document = factory.newDocumentBuilder().parse(xml.byteInputStream())
