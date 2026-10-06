@@ -39,7 +39,7 @@ class MainActivity : Activity() {
    allowFileAccess=false
    allowContentAccess=false
    mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
-   userAgentString=userAgentString+" SportsView/1.1"
+   userAgentString=userAgentString+" SportsView/1.2"
   }
   val assetLoader=WebViewAssetLoader.Builder().addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this)).build()
   web.webViewClient=object:WebViewClient(){
@@ -62,7 +62,7 @@ class MainActivity : Activity() {
   }
   web.addJavascriptInterface(AppBridge(),"Android")
   setContentView(web)
-  web.loadUrl("https://appassets.androidplatform.net/assets/index.html")
+  web.loadUrl("https://appassets.androidplatform.net/assets/index.html", mapOf("Referer" to "https://com.fredsystems.sportsviewer/"))
  }
 
  inner class AppBridge {
@@ -71,7 +71,9 @@ class MainActivity : Activity() {
     try {
      val channel=when(league.uppercase()){"NBA"->"UCWJ2lWNubArHWmf3FIHbfcQ";"NFL"->"UCDVYQ4Zhbm3S2dlz7P1xGg";"MLB"->"UCoLrcjPV5PbUrUyXq5mjc_A";else->throw IllegalArgumentException("Unknown league")}
      val url="https://www.youtube.com/feeds/videos.xml?channel_id="+URLEncoder.encode(channel,"UTF-8")
-     val c=(URL(url).openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=15000;readTimeout=20000;setRequestProperty("User-Agent","SportsView/1.1")}
+     val c=(URL(url).openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=15000;readTimeout=20000;setRequestProperty("User-Agent","SportsView/1.2")}
+     val code=c.responseCode
+     if(code !in 200..299) throw IllegalStateException("YouTube feed returned HTTP $code")
      val data=parseFeed(c.inputStream);c.disconnect()
      send("window.receiveVideos("+JSONObject.quote(data.toString())+");")
     }catch(e:Exception){send("window.appApiError("+JSONObject.quote("Could not load the official $league video feed. "+(e.message?:"Please try again."))+");")}
@@ -81,7 +83,7 @@ class MainActivity : Activity() {
   @JavascriptInterface fun checkForUpdates() {
    executor.execute {
     try {
-     val c=(URL("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest").openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=10000;readTimeout=15000;setRequestProperty("Accept","application/vnd.github+json");setRequestProperty("User-Agent","SportsView/1.1")}
+     val c=(URL("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest").openConnection() as HttpURLConnection).apply{requestMethod="GET";connectTimeout=10000;readTimeout=15000;setRequestProperty("Accept","application/vnd.github+json");setRequestProperty("User-Agent","SportsView/1.2")}
      val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()});c.disconnect()
      val out=JSONObject().apply{put("tag",j.optString("tag_name",""));put("url",j.optString("html_url",""));put("name",j.optString("name","Latest release"))}
      send("window.receiveUpdateCheck("+JSONObject.quote(out.toString())+");")
