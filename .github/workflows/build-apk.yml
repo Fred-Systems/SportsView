@@ -68,8 +68,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v1.6" app/build/outputs/apk/release/*.apk \
-            --title "SportsView 1.6" \
-            --notes "SportsView 1.6: startup hardening, explicit calculator opt-in, lazy YouTube loading, and WebView crash protection." \
+          gh release create "v1.6.1" app/build/outputs/apk/release/*.apk \
+            --title "SportsView 1.6.1" \
+            --notes "SportsView 1.6.1: startup hardening, explicit calculator opt-in, lazy YouTube loading, and WebView crash protection." \
             --latest || \
-          gh release upload "v1.6" app/build/outputs/apk/release/*.apk --clobber
+          gh release upload "v1.6.1" app/build/outputs/apk/release/*.apk --clobber
