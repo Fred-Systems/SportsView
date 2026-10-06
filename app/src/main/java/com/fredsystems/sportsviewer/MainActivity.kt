@@ -5,7 +5,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -19,15 +18,14 @@ class MainActivity : Activity() {
 
             val root = LinearLayout(this)
             root.orientation = LinearLayout.VERTICAL
-            root.gravity = Gravity.CENTER
-            root.setPadding(32, 32, 32, 32)
             root.setBackgroundColor(Color.rgb(22, 21, 18))
 
             val title = TextView(this)
-            title.text = "SPORTSVIEW WEBVIEW DIAGNOSTIC"
-            title.textSize = 22f
+            title.text = "SPORTSVIEW HTML DIAGNOSTIC"
+            title.textSize = 20f
             title.setTextColor(Color.WHITE)
             title.gravity = Gravity.CENTER
+            title.setPadding(16, 20, 16, 20)
             root.addView(title, LinearLayout.LayoutParams(-1, -2))
 
             phase("2: Native UI created")
@@ -35,30 +33,26 @@ class MainActivity : Activity() {
             val web = WebView(this)
             phase("3: WebView object created")
 
-            web.settings.javaScriptEnabled = false
-            phase("4: WebView settings applied")
+            web.settings.javaScriptEnabled = true
+            phase("4: JavaScript enabled")
 
-            web.setBackgroundColor(Color.rgb(22, 21, 18))
-            web.loadDataWithBaseURL(
-                null,
-                "<html><body style='background:#161512;color:white;font-family:sans-serif;text-align:center;padding-top:40px'><h2>WebView is working</h2><p>WebView created and rendered successfully.</p></body></html>",
-                "text/html",
-                "UTF-8",
-                null
-            )
-            phase("5: WebView load requested")
+            web.setBackgroundColor(Color.rgb(6, 9, 18))
+            phase("5: Loading local index.html")
+            web.loadUrl("file:///android_asset/index.html")
+            phase("6: loadUrl requested")
 
             root.addView(
                 web,
                 LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    500
+                    0,
+                    1f
                 )
             )
-            phase("6: WebView added to native layout")
+            phase("7: WebView added to native layout")
 
             setContentView(root)
-            phase("7: setContentView completed")
+            phase("8: setContentView completed")
         } catch (t: Throwable) {
             writeEmergencyReport(t)
             throw t
@@ -74,7 +68,7 @@ class MainActivity : Activity() {
     private fun writeEmergencyReport(t: Throwable) {
         try {
             File(filesDir, "startup_crash_report.txt").writeText(
-                "WebView diagnostic exception\n" +
+                "HTML diagnostic exception\n" +
                 "Last recorded phase: " +
                 File(filesDir, "startup_phase.txt").readText() + "\n" +
                 "Exception: " + t.javaClass.name + "\n" +
