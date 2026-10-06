@@ -38,6 +38,15 @@ class MainActivity : Activity() {
   super.onCreate(savedInstanceState)
   requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+  val calculatorEnabled=prefs.getBoolean("calculator_mode_enabled",false)
+  if(!calculatorEnabled){
+   packageManager.setComponentEnabledSetting(
+    mainLauncher,PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP
+   )
+   packageManager.setComponentEnabledSetting(
+    calculatorAlias,PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP
+   )
+  }
   normalSystemUi=window.decorView.systemUiVisibility
   web=WebView(this)
   web.settings.apply {
@@ -68,6 +77,26 @@ class MainActivity : Activity() {
      u.startsWith("https://sportsview-api.nextext-app.workers.dev/") ||
      u=="https://appassets.androidplatform.net/assets/index.html"
     return !allowed
+   }
+
+   override fun onRenderProcessGone(view:WebView,detail:RenderProcessGoneDetail):Boolean {
+    runOnUiThread {
+     try {
+      (view.parent as? android.view.ViewGroup)?.removeView(view)
+      view.destroy()
+     }catch(_:Exception){}
+     web=WebView(this@MainActivity)
+     setContentView(web)
+     web.settings.javaScriptEnabled=true
+     web.settings.domStorageEnabled=true
+     web.webViewClient=this
+     web.addJavascriptInterface(AppBridge(),"Android")
+     web.loadUrl(
+      "https://appassets.androidplatform.net/assets/index.html",
+      mapOf("Referer" to "https://com.fredsystems.sportsviewer/")
+     )
+    }
+    return true
    }
   }
 
@@ -186,7 +215,10 @@ class MainActivity : Activity() {
   fun saveCalculatorCode(code:String):Boolean {
    val clean=code.trim()
    if(clean.length<4 || clean.length>12 || !clean.all{it.isDigit()}) return false
-   prefs.edit().putString("calculator_code_hash",hashCode(clean)).apply()
+   prefs.edit()
+    .putString("calculator_code_hash",hashCode(clean))
+    .putBoolean("calculator_mode_enabled",true)
+    .apply()
    return true
   }
 
@@ -214,6 +246,7 @@ class MainActivity : Activity() {
   }
 
   private fun setLauncherComponents(calculator:Boolean) {
+   prefs.edit().putBoolean("calculator_mode_enabled",calculator).apply()
    val pm=packageManager
    pm.setComponentEnabledSetting(
     mainLauncher,
