@@ -3,6 +3,8 @@ name: Build APK
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "nfl_videos.json"
   workflow_dispatch:
 
 permissions:
