@@ -58,13 +58,13 @@ class MainActivity : Activity() {
  }
 
  private fun showStartupScreen() {
+  val previous=try{prefs.getString("last_startup_stage","") ?: ""}catch(_:Throwable){"preferences_unreadable"}
+  val previousDetail=try{prefs.getString("last_startup_detail","") ?: ""}catch(_:Throwable){""}
   checkpoint("native_screen")
   val provider=try {
    val p=WebViewCompat.getCurrentWebViewPackage(applicationContext)
    if(p==null) "WebView provider: unavailable" else "WebView provider: ${p.packageName} ${p.versionName}"
   }catch(t:Throwable){"WebView provider check failed: ${t.javaClass.simpleName}: ${t.message ?: "unknown"}"}
-  val previous=prefs.getString("last_startup_stage","") ?: ""
-  val previousDetail=prefs.getString("last_startup_detail","") ?: ""
   val root=LinearLayout(this).apply {
    orientation=LinearLayout.VERTICAL
    setPadding(36,60,36,36)
@@ -79,8 +79,8 @@ class MainActivity : Activity() {
   }
   val status=TextView(this).apply {
    text="Starting video player…\\n\\n$provider" +
-    if(previous.isNotBlank()) "\\n\\nLast startup checkpoint: $previous" +
-    if(previousDetail.isNotBlank()) "\\n$previousDetail" else "" else ""
+    if(previous.isNotBlank() && previous!="native_screen") "\\n\\nLast startup checkpoint: $previous" +
+    if(previousDetail.isNotBlank() && previous!="native_screen") "\\n$previousDetail" else "" else ""
    textSize=15f
    setTextColor(Color.LTGRAY)
    gravity=android.view.Gravity.CENTER
