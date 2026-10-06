@@ -31,7 +31,7 @@ jobs:
               "maxResults": "50",
               "key": os.environ["YOUTUBE_API_KEY"]
           })
-          url = "https://www.googleapis.com/youtube/v3/search?" + params
+          url = "https://www.googleapis.com/youtube/v3/playlistItems?" + params
           req = urllib.request.Request(url, headers={"User-Agent": "SportsView-NFL-Feed/1.0"})
           with urllib.request.urlopen(req, timeout=30) as response:
               data = json.load(response)
