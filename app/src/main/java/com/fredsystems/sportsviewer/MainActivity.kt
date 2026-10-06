@@ -75,7 +75,7 @@ class MainActivity : Activity() {
             intent.component?.className == calculatorAlias.className
 
         @JavascriptInterface fun hasCalculatorCode(): Boolean =
-            prefs.getString("calculator_code", null)?.matches(Regex("\d{4,12}")) == true
+            prefs.getString("calculator_code", null)?.matches(Regex("\\d{4,12}")) == true
 
         @JavascriptInterface fun verifyCalculatorCode(code: String): Boolean =
             hasCalculatorCode() && code == prefs.getString("calculator_code", null)
