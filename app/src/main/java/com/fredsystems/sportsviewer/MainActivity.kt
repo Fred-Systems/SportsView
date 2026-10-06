@@ -114,54 +114,6 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface fun downloadAndInstall(apkUrl: String, tag: String) {
-            try {
-                val request = DownloadManager.Request(Uri.parse(apkUrl))
-                    .setTitle("SportsView $tag")
-                    .setDescription("Downloading update")
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setDestinationInExternalFilesDir(this@MainActivity, Environment.DIRECTORY_DOWNLOADS, "SportsView-$tag.apk")
-                    .setMimeType("application/vnd.android.package-archive")
-                (getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-                send("window.receiveUpdateInstallError(" + JSONObject.quote("Update download started. Open the downloaded APK from your notification to install it.") + ");")
-            } catch (e: Exception) {
-                send("window.receiveUpdateInstallError(" + JSONObject.quote(e.message ?: "Could not download update.") + ");")
-            }
-        }
-
-        @JavascriptInterface fun setLandscape(enabled: Boolean) {
-            runOnUiThread {
-                requestedOrientation = if (enabled) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-            }
-        }
-
-        @JavascriptInterface fun checkForUpdates() {
-            executor.execute {
-                try {
-                    val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest", "application/vnd.github+json")
-                    val json = JSONObject(data)
-                    val tag = json.optString("tag_name", "")
-                    val name = json.optString("name", tag)
-                    val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
-                    val current = "v" + BuildConfig.VERSION_NAME
-                    val apkUrl = "https://github.com/Fred-Systems/SportsViewer/releases/download/" + Uri.encode(tag) + "/app-release.apk"
-                    val result = JSONObject().apply {
-                        put("tag", tag)
-                        put("name", name)
-                        put("url", url)
-                        put("apkUrl", apkUrl)
-                        put("current", current)
-                        put("updateAvailable", tag.isNotBlank() && tag != current)
-                    }
-                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
-                } catch (e: Exception) {
-                    val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
-                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
-                }
-            }
-        }
-
-        @JavascriptInterface fun downloadAndInstall(apkUrl: String, tag: String) {
             executor.execute {
                 try {
                     val request = DownloadManager.Request(Uri.parse(apkUrl))
