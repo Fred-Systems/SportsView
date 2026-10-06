@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="referrer" content="strict-origin-when-cross-origin">
 <title>SportsView</title>
 <style>
 :root{--accent:#19d3ae;--accent2:#6c63ff;--bg:#060912;--panel:rgba(16,22,35,.78);--panel2:rgba(22,30,46,.82);--text:#f7f9ff;--muted:#8490a5;--line:rgba(255,255,255,.08)}
@@ -54,7 +54,7 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':
 function renderList(){$('list').innerHTML=videos.map(function(v,i){return '<div class="video '+(i===currentIndex?'active':'')+'" onclick="playIndex('+i+')"><img class="thumb" src="'+esc(v.thumb)+'"><div><div class="vtitle">'+esc(v.title)+'</div><div class="date">'+formatDate(v.date)+'</div></div></div>'}).join('')}
 function formatDate(s){try{return new Date(s).toLocaleDateString()}catch(e){return ''}}
 function onYouTubeIframeAPIReady(){ready=true;makePlayer()}
-function makePlayer(){if(player||!ready)return;player=new YT.Player('player',{width:'100%',height:'100%',videoId:'',playerVars:{playsinline:1,controls:1,rel:0,iv_load_policy:3,fs:1,enablejsapi:1,origin:'https://appassets.androidplatform.net'},events:{onReady:function(){},onStateChange:onState,onError:function(e){appApiError('YouTube could not play this video (error '+e.data+'). Try another video.')}}})}
+function makePlayer(){if(player||!ready)return;player=new YT.Player('player',{width:'100%',height:'100%',videoId:'',playerVars:{playsinline:1,controls:1,rel:0,iv_load_policy:3,fs:1,enablejsapi:1,origin:'https://appassets.androidplatform.net',widget_referrer:'https://com.fredsystems.sportsviewer/'},events:{onReady:function(){},onStateChange:onState,onError:function(e){appApiError('YouTube could not play this video (error '+e.data+'). Try another video.')}}})}
 function playIndex(i){if(!videos[i])return;currentIndex=i;$('empty').style.display='none';$('nowTitle').textContent=videos[i].title;$('nowMeta').textContent=league+' · Official channel';renderList();if(!player)makePlayer();if(player)player.loadVideoById(videos[i].id)}
 function onState(e){if(e.data===YT.PlayerState.PLAYING)startTicker();else stopTicker();if(e.data===YT.PlayerState.ENDED)nextVideo()}
 function startTicker(){stopTicker();timer=setInterval(updateProgress,250)}function stopTicker(){if(timer)clearInterval(timer);timer=null}
