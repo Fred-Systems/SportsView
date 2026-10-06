@@ -3,6 +3,7 @@ package com.fredsystems.sportsviewer
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -11,7 +12,9 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.util.concurrent.Executors
+import org.json.JSONArray
 import org.json.JSONObject
+import javax.xml.parsers.DocumentBuilderFactory
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -36,7 +39,15 @@ class MainActivity : Activity() {
         fun loadVideos(league: String, pageToken: String?) {
             executor.execute {
                 try {
-                    val data = httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
+                    val data = try {
+                        httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
+                    } catch (e: Exception) {
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) {
+                            fetchNflFeed()
+                        } else {
+                            throw e
+                        }
+                    }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
                     send("window.appApiError(" + JSONObject.quote("Could not load official $league videos. " + (e.message ?: "Please try again.")) + ");")
@@ -76,7 +87,15 @@ class MainActivity : Activity() {
         fun setCalculatorLauncher(enabled: Boolean) {}
 
         @JavascriptInterface
-        fun setLandscape(enabled: Boolean) {}
+        fun setLandscape(enabled: Boolean) {
+            runOnUiThread {
+                requestedOrientation = if (enabled) {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
+            }
+        }
 
         @JavascriptInterface
         fun checkForUpdates() {}
@@ -108,6 +127,47 @@ class MainActivity : Activity() {
             } finally {
                 connection.disconnect()
             }
+        }
+
+        private fun fetchNflFeed(): String {
+            val feedUrl = "https://www.youtube.com/feeds/videos.xml?channel_id=UCDVYQ4Zhbm3S2dlz7P1xGg"
+            val xml = httpGet(feedUrl)
+            val factory = DocumentBuilderFactory.newInstance()
+            factory.isNamespaceAware = true
+            val document = factory.newDocumentBuilder().parse(xml.byteInputStream())
+            val entries = document.getElementsByTagNameNS("http://www.w3.org/2005/Atom", "entry")
+            val videos = JSONArray()
+            for (i in 0 until entries.length) {
+                val entry = entries.item(i)
+                val videoId = entry.childNodes.item(0)
+                var id = ""
+                var title = ""
+                var published = ""
+                var thumbnail = ""
+                for (j in 0 until entry.childNodes.length) {
+                    val node = entry.childNodes.item(j)
+                    when (node.localName) {
+                        "videoId" -> id = node.textContent
+                        "title" -> title = node.textContent
+                        "published" -> published = node.textContent
+                        "group" -> {
+                            for (k in 0 until node.childNodes.length) {
+                                val child = node.childNodes.item(k)
+                                if (child.localName == "thumbnail") thumbnail = child.attributes?.getNamedItem("url")?.nodeValue ?: ""
+                            }
+                        }
+                    }
+                }
+                if (id.isNotBlank()) {
+                    videos.put(JSONObject().apply {
+                        put("id", id)
+                        put("title", title)
+                        put("publishedAt", published)
+                        put("thumbnail", thumbnail.ifBlank { "https://i.ytimg.com/vi/$id/hqdefault.jpg" })
+                    })
+                }
+            }
+            return JSONObject().apply { put("videos", videos) }.toString()
         }
 
         private fun send(js: String) {
