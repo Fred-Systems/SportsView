@@ -102,6 +102,51 @@ class MainActivity : Activity() {
             }
         }
 
+        @JavascriptInterface fun setLandscape(enabled: Boolean) {
+            runOnUiThread {
+                requestedOrientation = if (enabled) {
+                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
+            }
+        }
+
+        @JavascriptInterface fun checkForUpdates() {
+            executor.execute {
+                try {
+                    val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest", "application/vnd.github+json")
+                    val json = JSONObject(data)
+                    val tag = json.optString("tag_name", "")
+                    val name = json.optString("name", tag)
+                    val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
+                    val current = "v" + BuildConfig.VERSION_NAME
+                    val assets = json.optJSONArray("assets") ?: JSONArray()
+                    var apkUrl = ""
+                    for (i in 0 until assets.length()) {
+                        val asset = assets.optJSONObject(i) ?: continue
+                        val assetName = asset.optString("name", "")
+                        if (assetName.endsWith(".apk", ignoreCase = true)) {
+                            apkUrl = asset.optString("browser_download_url", "")
+                            break
+                        }
+                    }
+                    val result = JSONObject().apply {
+                        put("tag", tag)
+                        put("name", name)
+                        put("url", url)
+                        put("current", current)
+                        put("apkUrl", apkUrl)
+                        put("updateAvailable", tag.isNotBlank() && tag != current)
+                    }
+                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
+                } catch (e: Exception) {
+                    val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
+                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
+                }
+            }
+        }
+
         @JavascriptInterface fun setCalculatorLauncher(enabled: Boolean) {
             val pm = packageManager
             if (enabled) {
