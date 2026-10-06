@@ -8,9 +8,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import android.util.Xml
 import android.webkit.*
 import android.widget.FrameLayout
 import androidx.webkit.WebViewAssetLoader
+import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -109,6 +111,12 @@ class MainActivity : Activity() {
      val data=httpGet(url)
      send("window.receiveVideos("+JSONObject.quote(data)+");")
     }catch(e:Exception){
+     if(sport=="nfl"){
+      try{
+       send("window.receiveVideos("+JSONObject.quote(fallbackNflFeed())+");")
+       return@execute
+      }catch(_:Exception){}
+     }
      send(
       "window.appApiError("+
       JSONObject.quote("Could not load official $league videos. "+(e.message?:"Please try again."))+
@@ -193,6 +201,65 @@ class MainActivity : Activity() {
    }
 
    return base+params.toString()
+  }
+
+  private fun fallbackNflFeed():String {
+   val channelId="UCDVYQ4Zhbm3S2dlz7P1xGg"
+   val url=URL("https://www.youtube.com/feeds/videos.xml?channel_id="+channelId)
+   val c=(url.openConnection() as HttpURLConnection).apply{
+    requestMethod="GET"
+    connectTimeout=12000
+    readTimeout=15000
+    setRequestProperty("User-Agent","SportsView/1.4")
+   }
+   try{
+    if(c.responseCode !in 200..299) throw IllegalStateException("NFL fallback feed returned HTTP "+c.responseCode)
+    val parser=Xml.newPullParser()
+    parser.setInput(c.inputStream,"UTF-8")
+    val videos=JSONArray()
+    var event=parser.eventType
+    var insideEntry=false
+    var id=""
+    var title=""
+    var published=""
+    while(event!=org.xmlpull.v1.XmlPullParser.END_DOCUMENT){
+     if(event==org.xmlpull.v1.XmlPullParser.START_TAG){
+      val name=parser.name
+      if(name=="entry"){
+       insideEntry=true;id="";title="";published=""
+      }else if(insideEntry && (name=="videoId" || name=="title" || name=="published")){
+       val value=parser.nextText()
+       when(name){
+        "videoId"->id=value
+        "title"->title=value
+        "published"->published=value
+       }
+      }
+     }else if(event==org.xmlpull.v1.XmlPullParser.END_TAG && parser.name=="entry"){
+      if(id.isNotBlank()){
+       videos.put(JSONObject().apply{
+        put("id",id)
+        put("title",if(title.isBlank())"NFL video" else title)
+        put("description","")
+        put("publishedAt",published)
+        put("channelId",channelId)
+        put("channelTitle","NFL")
+        put("thumbnail","https://i.ytimg.com/vi/"+id+"/hqdefault.jpg")
+       })
+      }
+      insideEntry=false
+     }
+     event=parser.next()
+    }
+    return JSONObject().apply{
+     put("sport","nfl")
+     put("channel","NFL")
+     put("videos",videos)
+     put("nextPageToken",JSONObject.NULL)
+    }.toString()
+   }finally{
+    c.disconnect()
+   }
   }
 
   private fun httpGet(url:String):String {
