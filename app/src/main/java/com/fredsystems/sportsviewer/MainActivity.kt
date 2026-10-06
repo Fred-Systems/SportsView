@@ -51,7 +51,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) { try { httpGet(buildApiUrl("/videos", "football", null, null)) } catch (_: Exception) { fetchNflFeed() } } else throw e
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) fetchNflMirror() else throw e
                     }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -67,7 +67,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/search", league.lowercase(), pageToken, query))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) { try { httpGet(buildApiUrl("/search", "football", null, query)) } catch (_: Exception) { searchNflFeed(query) } } else throw e
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) searchNflMirror(query) else throw e
                     }
                     send("window.receiveSearchResults(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -205,6 +205,21 @@ class MainActivity : Activity() {
             } finally {
                 connection.disconnect()
             }
+        }
+
+        private fun fetchNflMirror(): String {
+            return httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")
+        }
+
+        private fun searchNflMirror(query: String): String {
+            val source = JSONObject(fetchNflMirror()).optJSONArray("videos") ?: JSONArray()
+            val filtered = JSONArray()
+            val q = query.trim().lowercase()
+            for (i in 0 until source.length()) {
+                val video = source.getJSONObject(i)
+                if (video.optString("title").lowercase().contains(q)) filtered.put(video)
+            }
+            return JSONObject().put("videos", filtered).toString()
         }
 
         private fun fetchNflFeed(): String {
