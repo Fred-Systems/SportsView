@@ -13,16 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
-
       - name: Create release signing key
         env:
           KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD }}
@@ -30,46 +27,24 @@ jobs:
         run: |
           test -n "$KEYSTORE_PASSWORD"
           test -n "$KEY_PASSWORD"
-          keytool -genkeypair -v \
-            -keystore app/release.keystore \
-            -alias sportsview \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -keypass "$KEY_PASSWORD" \
-            -dname "CN=Fred-Systems, OU=SportsView, O=Fred-Systems, C=US"
-
+          keytool -genkeypair -v             -keystore app/release.keystore             -alias sportsview             -keyalg RSA             -keysize 2048             -validity 10000             -storepass "$KEYSTORE_PASSWORD"             -keypass "$KEY_PASSWORD"             -dname "CN=Fred-Systems, OU=SportsView, O=Fred-Systems, C=US"
       - name: Build signed release APK
         env:
           SPORTSVIEW_KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD }}
           SPORTSVIEW_KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
-
-      - name: Verify release APK and launcher configuration
+      - name: Verify diagnostic APK
         run: |
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           test "$(stat -c%s "$APK")" -gt 500000
           echo "APK size: $(stat -c%s "$APK") bytes"
-          echo "Source launcher safety checks..."
           grep -F 'android:enabled="true"' app/src/main/AndroidManifest.xml
           grep -F 'android:enabled="false"' app/src/main/AndroidManifest.xml
-          grep -F 'calculator_mode_enabled' app/src/main/java/com/fredsystems/sportsviewer/MainActivity.kt
-          echo "Startup hardening checks passed."
-
+          grep -F 'startup_crash_report.txt' app/src/main/java/com/fredsystems/sportsviewer/MainActivity.kt
+          grep -F 'SportsViewApplication' app/src/main/AndroidManifest.xml
+          echo "Crash diagnostic checks passed."
       - uses: actions/upload-artifact@v4
         with:
-          name: SportsView-release-apk
+          name: SportsView-crash-diagnostic-apk
           path: app/build/outputs/apk/release/*.apk
-
-      - name: Publish GitHub release
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v1.6.1" app/build/outputs/apk/release/*.apk \
-            --title "SportsView 1.6.1" \
-            --notes "SportsView 1.6.1: startup hardening, explicit calculator opt-in, lazy YouTube loading, and WebView crash protection." \
-            --latest || \
-          gh release upload "v1.6.1" app/build/outputs/apk/release/*.apk --clobber
