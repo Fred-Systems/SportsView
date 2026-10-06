@@ -112,8 +112,8 @@ class MainActivity : Activity() {
   @JavascriptInterface
   fun loadVideos(league:String,pageToken:String?) {
    executor.execute {
+    val sport=league.lowercase()
     try {
-     val sport=league.lowercase()
      val url=buildApiUrl("/videos",sport,pageToken,null)
      val data=httpGet(url)
      send("window.receiveVideos("+JSONObject.quote(data)+");")
@@ -136,8 +136,8 @@ class MainActivity : Activity() {
   @JavascriptInterface
   fun searchVideos(league:String,query:String,pageToken:String?) {
    executor.execute {
+    val sport=league.lowercase()
     try {
-     val sport=league.lowercase()
      val url=buildApiUrl("/search",sport,pageToken,query)
      val data=httpGet(url)
      send("window.receiveSearchResults("+JSONObject.quote(data)+");")
