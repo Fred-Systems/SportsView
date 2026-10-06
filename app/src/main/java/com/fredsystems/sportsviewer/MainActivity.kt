@@ -59,7 +59,15 @@ class MainActivity : Activity() {
         fun searchVideos(league: String, query: String, pageToken: String?) {
             executor.execute {
                 try {
-                    val data = httpGet(buildApiUrl("/search", league.lowercase(), pageToken, query))
+                    val data = try {
+                        httpGet(buildApiUrl("/search", league.lowercase(), pageToken, query))
+                    } catch (e: Exception) {
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) {
+                            searchNflFeed(query)
+                        } else {
+                            throw e
+                        }
+                    }
                     send("window.receiveSearchResults(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
                     send("window.appApiError(" + JSONObject.quote("Search failed. " + (e.message ?: "Please try again.")) + ");")
@@ -168,6 +176,18 @@ class MainActivity : Activity() {
                 }
             }
             return JSONObject().apply { put("videos", videos) }.toString()
+        }
+
+        private fun searchNflFeed(query: String): String {
+            val data = JSONObject(fetchNflFeed())
+            val source = data.optJSONArray("videos") ?: JSONArray()
+            val filtered = JSONArray()
+            val q = query.trim().lowercase()
+            for (i in 0 until source.length()) {
+                val video = source.getJSONObject(i)
+                if (video.optString("title").lowercase().contains(q)) filtered.put(video)
+            }
+            return JSONObject().apply { put("videos", filtered) }.toString()
         }
 
         private fun send(js: String) {
