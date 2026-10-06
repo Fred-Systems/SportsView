@@ -49,9 +49,12 @@ jobs:
                           or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
                   })
 
-          with open("nfl_videos.json", "w", encoding="utf-8") as f:
-              json.dump({"videos": videos}, f, ensure_ascii=False, indent=2)
-              f.write("\n")
+          if not videos:
+              print("YouTube API returned no videos; preserving existing mirror.")
+          else:
+              with open("nfl_videos.json", "w", encoding="utf-8") as f:
+                  json.dump({"videos": videos}, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
           PY
 
       - name: Commit refreshed feed
