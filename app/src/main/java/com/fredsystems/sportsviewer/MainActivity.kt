@@ -8,7 +8,6 @@ import android.content.Context
 import android.os.Environment
 import android.os.Build
 import android.provider.Settings
-import androidx.core.content.FileProvider
 import android.content.pm.ActivityInfo
 import android.content.ComponentName
 import android.content.pm.PackageManager
