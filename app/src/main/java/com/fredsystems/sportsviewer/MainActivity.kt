@@ -121,7 +121,7 @@ class MainActivity : Activity() {
                     val tag = json.optString("tag_name", "unknown")
                     val name = json.optString("name", tag)
                     val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
-                    val current = "v1.6.1"
+                    val current = "v1.7.0"
                     val result = JSONObject().apply {
                         put("tag", tag)
                         put("name", name)
