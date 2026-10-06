@@ -27,10 +27,8 @@ jobs:
 
           params = urllib.parse.urlencode({
               "part": "snippet",
-              "channelId": "UCDVYQ4Zhbm3S2dlz7P1xGg",
+              "playlistId": "UUDVYQ4Zhbm3S2dlz7P1xGg",
               "maxResults": "50",
-              "order": "date",
-              "type": "video",
               "key": os.environ["YOUTUBE_API_KEY"]
           })
           url = "https://www.googleapis.com/youtube/v3/search?" + params
@@ -40,7 +38,7 @@ jobs:
 
           videos = []
           for item in data.get("items", []):
-              vid = item.get("id", {}).get("videoId", "")
+              vid = item.get("snippet", {}).get("resourceId", {}).get("videoId", "")
               snippet = item.get("snippet", {})
               if vid:
                   videos.append({
