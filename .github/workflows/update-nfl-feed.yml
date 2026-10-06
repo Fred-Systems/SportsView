@@ -18,31 +18,38 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fetch official NFL YouTube uploads
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          python -m pip install --disable-pip-version-check --quiet yt-dlp
-          yt-dlp \
-            --flat-playlist \
-            --playlist-end 50 \
-            --dump-single-json \
-            --no-warnings \
-            "https://www.youtube.com/channel/UCDVYQ4Zhbm3S2dlz7P1xGg/videos" > nfl_source.json
+          test -n "$YOUTUBE_API_KEY"
           python - <<'PY'
-          import json
+          import json, os, urllib.parse, urllib.request
 
-          source = json.load(open("nfl_source.json", encoding="utf-8"))
+          params = urllib.parse.urlencode({
+              "part": "snippet",
+              "channelId": "UCDVYQ4Zhbm3S2dlz7P1xGg",
+              "maxResults": "50",
+              "order": "date",
+              "type": "video",
+              "key": os.environ["YOUTUBE_API_KEY"]
+          })
+          url = "https://www.googleapis.com/youtube/v3/search?" + params
+          req = urllib.request.Request(url, headers={"User-Agent": "SportsView-NFL-Feed/1.0"})
+          with urllib.request.urlopen(req, timeout=30) as response:
+              data = json.load(response)
+
           videos = []
-          for item in source.get("entries", []):
-              if not item:
-                  continue
-              vid = item.get("id", "")
-              if not vid:
-                  continue
-              videos.append({
-                  "id": vid,
-                  "title": item.get("title", ""),
-                  "publishedAt": item.get("upload_date", ""),
-                  "thumbnail": f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
-              })
+          for item in data.get("items", []):
+              vid = item.get("id", {}).get("videoId", "")
+              snippet = item.get("snippet", {})
+              if vid:
+                  videos.append({
+                      "id": vid,
+                      "title": snippet.get("title", ""),
+                      "publishedAt": snippet.get("publishedAt", ""),
+                      "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url")
+                          or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
+                  })
 
           with open("nfl_videos.json", "w", encoding="utf-8") as f:
               json.dump({"videos": videos}, f, ensure_ascii=False, indent=2)
