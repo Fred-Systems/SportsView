@@ -2,6 +2,8 @@ package com.fredsystems.sportsviewer
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Xml
 import android.view.View
@@ -75,6 +77,7 @@ class MainActivity : Activity() {
     }catch(e:Exception){send("window.appApiError("+JSONObject.quote("Could not load the official $league video feed. "+(e.message?:"Please try again."))+");")}
    }
   }
+  @JavascriptInterface fun openUrl(url:String) { try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } catch(_:Exception) {} }
   @JavascriptInterface fun checkForUpdates() {
    executor.execute {
     try {
