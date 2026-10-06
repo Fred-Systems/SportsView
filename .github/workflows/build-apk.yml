@@ -50,8 +50,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v1.4" app/build/outputs/apk/release/*.apk \
-            --title "SportsView 1.4" \
-            --notes "SportsView 1.4: polished UI, manual landscape video mode, and stability improvements." \
+          gh release create "v1.5" app/build/outputs/apk/release/*.apk \
+            --title "SportsView 1.5" \
+            --notes "SportsView 1.5: polished UI, calculator mode, manual landscape video mode, and stability improvements." \
             --latest || \
-          gh release upload "v1.4" app/build/outputs/apk/release/*.apk --clobber
+          gh release upload "v1.5" app/build/outputs/apk/release/*.apk --clobber
