@@ -16,8 +16,6 @@ jobs:
         with:
           gradle-version: "8.9"
       - name: Build installable debug APK
-        env:
-          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: gradle --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
