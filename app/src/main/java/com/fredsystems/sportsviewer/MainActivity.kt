@@ -29,8 +29,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 class MainActivity : Activity() {
     private lateinit var webView: WebView
     private val executor = Executors.newCachedThreadPool()
-    private val calculatorAlias by lazy { ComponentName(packageName, packageName + ".CalculatorAlias") }
-    private val mainComponent by lazy { ComponentName(packageName, packageName + ".SportsViewAlias") }
+    private val calculatorAlias by lazy { ComponentName(packageName, packageName + ".CalculatorLauncher") }
+    private val mainComponent by lazy { ComponentName(packageName, packageName + ".SportsViewLauncher") }
     private val prefs by lazy { getSharedPreferences("sportsview", MODE_PRIVATE) }
 
     @SuppressLint("SetJavaScriptEnabled")
