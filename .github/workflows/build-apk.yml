@@ -53,7 +53,7 @@ jobs:
           echo "Checking packaged launcher entries..."
           BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -n 1)"
           "$BUILD_TOOLS/aapt2" dump badging "$APK" | grep -F "com.fredsystems.sportsviewer.MainActivity"
-          "$BUILD_TOOLS/aapt2" dump badging "$APK" | grep -F "com.fredsystems.sportsviewer.CalculatorAlias"
+          "$BUILD_TOOLS/aapt2" dump xmltree "$APK" AndroidManifest.xml | grep -F "CalculatorAlias"
           echo "Source launcher safety checks..."
           grep -F 'android:enabled="true"' app/src/main/AndroidManifest.xml
           grep -F 'android:enabled="false"' app/src/main/AndroidManifest.xml
@@ -70,7 +70,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v1.6" app/build/outputs/apk/release/*.apk \
-            --title "SportsView 1.5" \
-            --notes "SportsView 1.5: polished UI, calculator mode, manual landscape video mode, and stability improvements." \
+            --title "SportsView 1.6" \
+            --notes "SportsView 1.6: startup hardening, explicit calculator opt-in, lazy YouTube loading, and WebView crash protection." \
             --latest || \
           gh release upload "v1.6" app/build/outputs/apk/release/*.apk --clobber
