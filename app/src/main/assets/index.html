@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>SportsViewer</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>SportsView</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:#070a10;color:#f7f8fb;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}body{min-height:100vh}.app{max-width:1400px;margin:auto;padding:18px}
 .header{display:flex;align-items:center;justify-content:space-between;padding:12px 4px 20px}.brand{display:flex;gap:12px;align-items:center;min-width:0}.logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;background:linear-gradient(135deg,#f97316,#ef4444);display:grid;place-items:center;font-size:24px;box-shadow:0 8px 30px #ef444433}.brand h1{font-size:22px;margin:0;white-space:nowrap}.brand small{color:#7f8ba0}.credit{color:#68758a;font-size:12px}
@@ -11,7 +11,7 @@
 @media(max-width:520px){.app{padding:8px}.header{padding:8px 2px 12px}.brand{gap:8px}.logo{width:40px;height:40px;flex-basis:40px;border-radius:11px;font-size:20px}.brand h1{font-size:18px}.brand small{font-size:10px}.tabs{gap:7px;padding-bottom:10px}.tab{padding:10px 13px}.layout{gap:10px}.panel{border-radius:15px}.controls{padding:10px}.title{font-size:15px}.buttons{gap:6px}.btn{padding:9px 9px;font-size:12px;min-height:38px}.thumb{width:92px;height:52px;flex-basis:92px}.video{gap:8px;padding:9px}.vtitle{font-size:12px}.date{font-size:10px}.listHead{padding:12px}.notice{margin:8px;padding:11px}}
 @media(max-width:360px){.app{padding:5px}.brand h1{font-size:16px}.brand small{display:none}.logo{width:36px;height:36px;flex-basis:36px}.tab{padding:9px 11px}.btn{padding:8px 7px;font-size:11px}.thumb{width:82px;height:46px;flex-basis:82px}.vtitle{font-size:11px}}
 </style></head><body><div class="app">
-<header class="header"><div class="brand"><div class="logo">🏆</div><div><h1>SportsViewer</h1><small>Official league video hub</small></div></div><div class="credit">Developed by Fred-Systems</div></header>
+<header class="header"><div class="brand"><div class="logo">🏆</div><div><h1>SportsView</h1><small>Official league video hub</small></div></div><div class="credit">Developed by Fred-Systems</div></header>
 <nav class="tabs"><button class="tab active" data-league="NBA">🏀 NBA</button><button class="tab" data-league="NFL">🏈 NFL</button><button class="tab" data-league="MLB">⚾ MLB</button></nav>
 <div id="notice" class="notice" style="display:none"></div><main class="layout"><section class="panel">
 <div class="playerWrap"><div id="player" class="player"></div><div id="empty" class="empty">Choose a video to start watching.</div></div>
@@ -19,7 +19,7 @@
 <input id="progress" class="progress" type="range" min="0" max="100" value="0" step=".1"><div class="time" style="display:flex;justify-content:space-between"><span id="current">0:00</span><span id="duration">0:00</span></div>
 <div class="buttons"><button class="btn" onclick="skip(-10)">↶ 10s</button><button class="btn primary" onclick="togglePlay()">▶ / ❚❚</button><button class="btn" onclick="skip(10)">10s ↷</button><button class="btn" onclick="previousVideo()">‹ Previous</button><button class="btn" onclick="nextVideo()">Next ›</button><button class="btn" onclick="setViewer(0.78)">Small</button><button class="btn" onclick="setViewer(1)">Standard</button><button class="btn" onclick="setViewer(1.18)">Wide</button><button class="btn" onclick="toggleFullscreen()">⛶ Fullscreen</button></div></div></section>
 <aside class="panel"><div class="listHead"><strong id="listName">NBA Videos</strong><span id="count" class="time">Loading…</span></div><div id="list" class="list"></div><button class="btn load" onclick="loadMore()">Load more videos</button></aside></main>
-<footer style="text-align:center;color:#536075;font-size:11px;padding:22px">Videos are played through the official YouTube embedded player. SportsViewer does not download or re-host video.</footer></div>
+<footer style="text-align:center;color:#536075;font-size:11px;padding:22px">Videos are played through the official YouTube embedded player. SportsView does not download or re-host video.</footer></div>
 <script>
 let league='NBA',videos=[],nextToken=null,currentIndex=-1,player=null,ready=false,timer=null,pendingNext=false;
 var $=function(id){return document.getElementById(id)};var esc=function(s){return String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})};
