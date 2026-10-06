@@ -15,8 +15,16 @@ import android.view.WindowManager
 import android.util.Xml
 import android.webkit.*
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.graphics.Color
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewOutcomeReceiver
+import androidx.webkit.WebViewStartUpConfig
+import androidx.webkit.WebViewStartUpResult
+import androidx.webkit.WebViewStartupException
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -39,69 +47,161 @@ class MainActivity : Activity() {
   super.onCreate(savedInstanceState)
   requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-  // SportsView is the normal launcher by manifest. Do not change launcher
-  // component state during startup. Calculator mode is changed only by Settings.
   normalSystemUi=window.decorView.systemUiVisibility
-  web=WebView(this)
-  web.settings.apply {
-   javaScriptEnabled=true
-   domStorageEnabled=true
-   mediaPlaybackRequiresUserGesture=true
-   allowFileAccess=false
-   allowContentAccess=false
-   mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
-   userAgentString=userAgentString+" SportsView/1.4"
+  showStartupScreen()
+  startSafeWebView()
+ }
+
+ private fun showStartupScreen() {
+  val root=LinearLayout(this).apply {
+   orientation=LinearLayout.VERTICAL
+   setPadding(48,72,48,48)
+   setBackgroundColor(Color.rgb(22,21,18))
+   gravity=android.view.Gravity.CENTER_HORIZONTAL
   }
+  val title=TextView(this).apply {
+   text="SportsView"
+   textSize=30f
+   setTextColor(Color.WHITE)
+   gravity=android.view.Gravity.CENTER
+  }
+  val status=TextView(this).apply {
+   text="Starting secure video player…"
+   textSize=16f
+   setTextColor(Color.LTGRAY)
+   gravity=android.view.Gravity.CENTER
+   setPadding(0,24,0,0)
+   tag="startup_status"
+  }
+  root.addView(title,LinearLayout.LayoutParams(-1,-2))
+  root.addView(status,LinearLayout.LayoutParams(-1,-2))
+  setContentView(root)
+ }
 
-  val assetLoader=WebViewAssetLoader.Builder()
-   .addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this))
-   .build()
+ private fun updateStartupStatus(message:String) {
+  val v=findViewById<TextView>(android.R.id.content)?.findViewWithTag<TextView>("startup_status")
+  if(v!=null) v.text=message
+ }
 
-  web.webViewClient=object:WebViewClientCompat(){
-   override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=
-    assetLoader.shouldInterceptRequest(request.url)
+ private fun showWebViewFailure(error:Throwable) {
+  val packageInfo=try {
+   val p=WebView.getCurrentWebViewPackage()
+   if(p==null) "WebView provider: unavailable" else "WebView provider: ${p.packageName} ${p.versionName}"
+  }catch(_:Throwable){"WebView provider: unavailable"}
 
-   override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
-    val u=request.url.toString()
-    val allowed=
-     u.startsWith("https://www.youtube.com/") ||
-     u.startsWith("https://www.youtube-nocookie.com/") ||
-     u.startsWith("https://i.ytimg.com/") ||
-     u.startsWith("https://s.ytimg.com/") ||
-     u.startsWith("https://sportsview-api.nextext-app.workers.dev/") ||
-     u=="https://appassets.androidplatform.net/assets/index.html"
-    return !allowed
+  val root=LinearLayout(this).apply {
+   orientation=LinearLayout.VERTICAL
+   setPadding(36,60,36,36)
+   setBackgroundColor(Color.rgb(22,21,18))
+  }
+  val title=TextView(this).apply {
+   text="SportsView could not start"
+   textSize=24f
+   setTextColor(Color.WHITE)
+  }
+  val message=TextView(this).apply {
+   text="The Android WebView could not initialize on this device.\n\n${error.javaClass.name}: ${error.message ?: "No error message"}\n\n$packageInfo\n\nThis screen is intentional: SportsView stayed open so the WebView failure can be identified instead of silently closing."
+   textSize=15f
+   setTextColor(Color.LTGRAY)
+   setPadding(0,24,0,0)
+  }
+  root.addView(title,LinearLayout.LayoutParams(-1,-2))
+  root.addView(message,LinearLayout.LayoutParams(-1,-2))
+  setContentView(root)
+ }
+
+ private fun startSafeWebView() {
+  val startupExecutor=Executors.newSingleThreadExecutor()
+  try {
+   val config=WebViewStartUpConfig.Builder(startupExecutor).build()
+   WebViewCompat.startUpWebView(
+    applicationContext,
+    config,
+    object:WebViewOutcomeReceiver<WebViewStartUpResult,WebViewStartupException>{
+     override fun onResult(result:WebViewStartUpResult) {
+      runOnUiThread { createSportsWebView() }
+     }
+     override fun onError(error:WebViewStartupException) {
+      runOnUiThread { showWebViewFailure(error) }
+     }
+    }
+   )
+  }catch(t:Throwable){
+   runOnUiThread { showWebViewFailure(t) }
+  }
+ }
+
+ @SuppressLint("SetJavaScriptEnabled")
+ private fun createSportsWebView() {
+  try {
+   web=WebView(this)
+   web.setLayerType(View.LAYER_TYPE_SOFTWARE,null)
+   web.settings.apply {
+    javaScriptEnabled=true
+    domStorageEnabled=true
+    mediaPlaybackRequiresUserGesture=true
+    allowFileAccess=false
+    allowContentAccess=false
+    mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
+    userAgentString=userAgentString+" SportsView/1.6"
    }
 
+   val assetLoader=WebViewAssetLoader.Builder()
+    .addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this))
+    .build()
 
-  }
+   web.webViewClient=object:WebViewClientCompat(){
+    override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest)=
+     assetLoader.shouldInterceptRequest(request.url)
 
-  web.webChromeClient=object:WebChromeClient(){
-   override fun onShowCustomView(view:View,callback:CustomViewCallback){
-    if(customView!=null){callback.onCustomViewHidden();return}
-    customView=view
-    customViewCallback=callback
-    (web.parent as? android.view.ViewGroup)?.addView(
-     view,
-     FrameLayout.LayoutParams(-1,-1)
-    )
-    web.visibility=View.GONE
-    window.decorView.systemUiVisibility=
-     View.SYSTEM_UI_FLAG_FULLSCREEN or
-     View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
+     val u=request.url.toString()
+     val allowed=
+      u.startsWith("https://www.youtube.com/") ||
+      u.startsWith("https://www.youtube-nocookie.com/") ||
+      u.startsWith("https://i.ytimg.com/") ||
+      u.startsWith("https://s.ytimg.com/") ||
+      u.startsWith("https://sportsview-api.nextext-app.workers.dev/") ||
+      u=="https://appassets.androidplatform.net/assets/index.html"
+     return !allowed
+    }
+
+    override fun onRenderProcessGone(view:WebView,detail:RenderProcessGoneDetail):Boolean {
+     runOnUiThread {
+      try {
+       (view.parent as? android.view.ViewGroup)?.removeView(view)
+       view.destroy()
+      }catch(_:Throwable){}
+      showWebViewFailure(IllegalStateException("The WebView renderer process terminated. didCrash=${detail.didCrash()}"))
+     }
+     return true
+    }
    }
 
-   override fun onHideCustomView(){hideCustomView()}
+   web.webChromeClient=object:WebChromeClient(){
+    override fun onShowCustomView(view:View,callback:CustomViewCallback){
+     if(customView!=null){callback.onCustomViewHidden();return}
+     customView=view
+     customViewCallback=callback
+     (web.parent as? android.view.ViewGroup)?.addView(view,FrameLayout.LayoutParams(-1,-1))
+     web.visibility=View.GONE
+     window.decorView.systemUiVisibility=
+      View.SYSTEM_UI_FLAG_FULLSCREEN or
+      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+    }
+    override fun onHideCustomView(){hideCustomView()}
+   }
+
+   web.addJavascriptInterface(AppBridge(),"Android")
+   setContentView(web)
+   web.loadUrl(
+    "https://appassets.androidplatform.net/assets/index.html",
+    mapOf("Referer" to "https://com.fredsystems.sportsviewer/")
+   )
+  }catch(t:Throwable){
+   showWebViewFailure(t)
   }
-
-  web.addJavascriptInterface(AppBridge(),"Android")
-  setContentView(web)
-
-  web.loadUrl(
-   "https://appassets.androidplatform.net/assets/index.html",
-   mapOf("Referer" to "https://com.fredsystems.sportsviewer/")
-  )
  }
 
  inner class AppBridge {
