@@ -3,7 +3,10 @@ package com.fredsystems.sportsviewer
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ComponentName
+import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -20,11 +23,12 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private val executor = Executors.newCachedThreadPool()
     private val calculatorAlias by lazy { ComponentName(packageName, packageName + ".CalculatorAlias") }
+    private val mainComponent by lazy { ComponentName(this, MainActivity::class.java) }
+    private val prefs by lazy { getSharedPreferences("sportsview", MODE_PRIVATE) }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         webView = WebView(this)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
@@ -42,11 +46,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) {
-                            fetchNflFeed()
-                        } else {
-                            throw e
-                        }
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) fetchNflFeed() else throw e
                     }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -62,11 +62,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/search", league.lowercase(), pageToken, query))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) {
-                            searchNflFeed(query)
-                        } else {
-                            throw e
-                        }
+                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) searchNflFeed(query) else throw e
                     }
                     send("window.receiveSearchResults(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -75,41 +71,77 @@ class MainActivity : Activity() {
             }
         }
 
-        @JavascriptInterface
-        fun isCalculatorLaunch(): Boolean =
+        @JavascriptInterface fun isCalculatorLaunch(): Boolean =
             intent.component?.className == calculatorAlias.className
 
-        @JavascriptInterface
-        fun hasCalculatorCode(): Boolean = false
+        @JavascriptInterface fun hasCalculatorCode(): Boolean =
+            prefs.getString("calculator_code", null)?.matches(Regex("\d{4,12}")) == true
 
-        @JavascriptInterface
-        fun verifyCalculatorCode(code: String): Boolean = false
+        @JavascriptInterface fun verifyCalculatorCode(code: String): Boolean =
+            hasCalculatorCode() && code == prefs.getString("calculator_code", null)
 
-        @JavascriptInterface
-        fun openSportsView() {}
+        @JavascriptInterface fun saveCalculatorCode(code: String): Boolean {
+            if (!code.matches(Regex("\d{4,12}"))) return false
+            return prefs.edit().putString("calculator_code", code).commit()
+        }
 
-        @JavascriptInterface
-        fun saveCalculatorCode(code: String): Boolean = false
-
-        @JavascriptInterface
-        fun setCalculatorLauncher(enabled: Boolean) {}
-
-        @JavascriptInterface
-        fun setLandscape(enabled: Boolean) {
+        @JavascriptInterface fun openSportsView() {
             runOnUiThread {
-                requestedOrientation = if (enabled) {
-                    ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                } else {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                setCalculatorLauncher(false)
+                val i = Intent(this@MainActivity, MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+                startActivity(i)
+            }
+        }
+
+        @JavascriptInterface fun setCalculatorLauncher(enabled: Boolean) {
+            val pm = packageManager
+            if (enabled) {
+                pm.setComponentEnabledSetting(mainComponent, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+                pm.setComponentEnabledSetting(calculatorAlias, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+            } else {
+                pm.setComponentEnabledSetting(calculatorAlias, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+                pm.setComponentEnabledSetting(mainComponent, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP)
+            }
+        }
+
+        @JavascriptInterface fun setLandscape(enabled: Boolean) {
+            runOnUiThread {
+                requestedOrientation = if (enabled) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+        }
+
+        @JavascriptInterface fun checkForUpdates() {
+            executor.execute {
+                try {
+                    val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest", "application/vnd.github+json")
+                    val json = JSONObject(data)
+                    val tag = json.optString("tag_name", "unknown")
+                    val name = json.optString("name", tag)
+                    val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
+                    val current = "v1.6.1"
+                    val result = JSONObject().apply {
+                        put("tag", tag)
+                        put("name", name)
+                        put("url", url)
+                        put("current", current)
+                        put("updateAvailable", tag != current && tag.isNotBlank())
+                    }
+                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
+                } catch (e: Exception) {
+                    val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
+                    send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
                 }
             }
         }
 
-        @JavascriptInterface
-        fun checkForUpdates() {}
-
-        @JavascriptInterface
-        fun openUrl(url: String) {}
+        @JavascriptInterface fun openUrl(url: String) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            } catch (_: Exception) {}
+        }
 
         private fun buildApiUrl(endpoint: String, sport: String, pageToken: String?, query: String?): String {
             val base = "https://sportsview-api.nextext-app.workers.dev$endpoint"
@@ -119,17 +151,17 @@ class MainActivity : Activity() {
             return base + params
         }
 
-        private fun httpGet(url: String): String {
+        private fun httpGet(url: String, accept: String = "application/json"): String {
             val connection = URL(url).openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.connectTimeout = 15000
             connection.readTimeout = 20000
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("User-Agent", "SportsView/1.4")
+            connection.setRequestProperty("Accept", accept)
+            connection.setRequestProperty("User-Agent", "SportsView/1.7")
             try {
                 val code = connection.responseCode
                 val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-                val body = stream.bufferedReader().use { it.readText() }
+                val body = (stream ?: connection.inputStream).bufferedReader().use { it.readText() }
                 if (code !in 200..299) throw IllegalStateException("HTTP $code")
                 return body
             } finally {
@@ -150,9 +182,7 @@ class MainActivity : Activity() {
                 val body = (if (code in 200..299) connection.inputStream else connection.errorStream).bufferedReader().use { it.readText() }
                 if (code !in 200..299) throw IllegalStateException("HTTP $code")
                 body
-            } finally {
-                connection.disconnect()
-            }
+            } finally { connection.disconnect() }
             val factory = DocumentBuilderFactory.newInstance()
             factory.isNamespaceAware = true
             val document = factory.newDocumentBuilder().parse(xml.byteInputStream())
@@ -160,51 +190,37 @@ class MainActivity : Activity() {
             val videos = JSONArray()
             for (i in 0 until entries.length) {
                 val entry = entries.item(i)
-                val videoId = entry.childNodes.item(0)
-                var id = ""
-                var title = ""
-                var published = ""
-                var thumbnail = ""
+                var id = ""; var title = ""; var published = ""; var thumbnail = ""
                 for (j in 0 until entry.childNodes.length) {
                     val node = entry.childNodes.item(j)
                     when (node.localName) {
                         "videoId" -> id = node.textContent
                         "title" -> title = node.textContent
                         "published" -> published = node.textContent
-                        "group" -> {
-                            for (k in 0 until node.childNodes.length) {
-                                val child = node.childNodes.item(k)
-                                if (child.localName == "thumbnail") thumbnail = child.attributes?.getNamedItem("url")?.nodeValue ?: ""
-                            }
+                        "group" -> for (k in 0 until node.childNodes.length) {
+                            val child = node.childNodes.item(k)
+                            if (child.localName == "thumbnail") thumbnail = child.attributes?.getNamedItem("url")?.nodeValue ?: ""
                         }
                     }
                 }
-                if (id.isNotBlank()) {
-                    videos.put(JSONObject().apply {
-                        put("id", id)
-                        put("title", title)
-                        put("publishedAt", published)
-                        put("thumbnail", thumbnail.ifBlank { "https://i.ytimg.com/vi/$id/hqdefault.jpg" })
-                    })
-                }
+                if (id.isNotBlank()) videos.put(JSONObject().apply {
+                    put("id", id); put("title", title); put("publishedAt", published)
+                    put("thumbnail", thumbnail.ifBlank { "https://i.ytimg.com/vi/$id/hqdefault.jpg" })
+                })
             }
-            return JSONObject().apply { put("videos", videos) }.toString()
+            return JSONObject().put("videos", videos).toString()
         }
 
         private fun searchNflFeed(query: String): String {
-            val data = JSONObject(fetchNflFeed())
-            val source = data.optJSONArray("videos") ?: JSONArray()
-            val filtered = JSONArray()
-            val q = query.trim().lowercase()
+            val source = JSONObject(fetchNflFeed()).optJSONArray("videos") ?: JSONArray()
+            val filtered = JSONArray(); val q = query.trim().lowercase()
             for (i in 0 until source.length()) {
                 val video = source.getJSONObject(i)
                 if (video.optString("title").lowercase().contains(q)) filtered.put(video)
             }
-            return JSONObject().apply { put("videos", filtered) }.toString()
+            return JSONObject().put("videos", filtered).toString()
         }
 
-        private fun send(js: String) {
-            runOnUiThread { webView.evaluateJavascript(js, null) }
-        }
+        private fun send(js: String) { runOnUiThread { webView.evaluateJavascript(js, null) } }
     }
 }
