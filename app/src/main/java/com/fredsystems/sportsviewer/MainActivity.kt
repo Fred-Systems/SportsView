@@ -30,7 +30,7 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private val executor = Executors.newCachedThreadPool()
     private val calculatorAlias by lazy { ComponentName(packageName, packageName + ".CalculatorAlias") }
-    private val mainComponent by lazy { ComponentName(this, MainActivity::class.java) }
+    private val mainComponent by lazy { ComponentName(packageName, packageName + ".SportsViewAlias") }
     private val prefs by lazy { getSharedPreferences("sportsview", MODE_PRIVATE) }
 
     @SuppressLint("SetJavaScriptEnabled")
