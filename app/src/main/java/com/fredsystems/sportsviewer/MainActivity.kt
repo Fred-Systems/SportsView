@@ -81,7 +81,7 @@ class MainActivity : Activity() {
             hasCalculatorCode() && code == prefs.getString("calculator_code", null)
 
         @JavascriptInterface fun saveCalculatorCode(code: String): Boolean {
-            if (!code.matches(Regex("\d{4,12}"))) return false
+            if (!code.matches(Regex("\\d{4,12}"))) return false
             return prefs.edit().putString("calculator_code", code).commit()
         }
 
