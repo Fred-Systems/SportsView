@@ -3,6 +3,7 @@ package com.fredsystems.sportsviewer
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -26,6 +27,7 @@ class MainActivity : Activity() {
  @SuppressLint("SetJavaScriptEnabled")
  override fun onCreate(savedInstanceState:Bundle?) {
   super.onCreate(savedInstanceState)
+  requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
   window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   normalSystemUi=window.decorView.systemUiVisibility
   web=WebView(this)
