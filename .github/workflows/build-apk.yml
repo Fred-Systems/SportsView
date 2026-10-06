@@ -66,10 +66,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION=$(grep -o 'versionName = "[^"]*"' app/build.gradle.kts | sed 's/.*"//;s/"$//')
-          TAG="v$VERSION"
-          gh release create "$TAG" app/build/outputs/apk/release/*.apk \
-            --title "SportsView $VERSION" \
-            --notes "SportsView $VERSION" \
+          gh release create "v1.8.1" app/build/outputs/apk/release/*.apk \
+            --title "SportsView 1.8.1" \
+            --notes "SportsView 1.8.1" \
             --latest || \
-          gh release upload "$TAG" app/build/outputs/apk/release/*.apk --clobber
+          gh release upload "v1.8.1" app/build/outputs/apk/release/*.apk --clobber
