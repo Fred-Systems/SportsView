@@ -61,7 +61,6 @@ class MainActivity : Activity() {
 
     inner class DiagnosticBridge {
         @JavascriptInterface fun loadVideos(sport: String, pageToken: String?) {
-            // Intentionally no network call. This only proves the bridge can be invoked.
             runOnUiThread {
                 webView.evaluateJavascript(
                     "window.receiveVideos(" + jsString("{\"videos\":[],\"nextPageToken\":null}") + ")",
@@ -86,13 +85,9 @@ class MainActivity : Activity() {
             !prefs.getString("calculator_code_hash", null).isNullOrBlank()
 
         @JavascriptInterface fun verifyCalculatorCode(code: String): Boolean = false
-
         @JavascriptInterface fun openSportsView() {}
-
         @JavascriptInterface fun saveCalculatorCode(code: String): Boolean = false
-
         @JavascriptInterface fun setCalculatorLauncher(enabled: Boolean) {}
-
         @JavascriptInterface fun setLandscape(enabled: Boolean) {}
 
         @JavascriptInterface fun checkForUpdates() {
@@ -107,7 +102,7 @@ class MainActivity : Activity() {
         @JavascriptInterface fun openUrl(url: String) {}
 
         private fun jsString(value: String): String =
-            org.json.JSONObject.quote(value).replace("\\"", "\\\"")
+            org.json.JSONObject.quote(value)
     }
 
     private fun phase(value: String) {
