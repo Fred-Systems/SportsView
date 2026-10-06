@@ -5,7 +5,7 @@
   <activity android:name=".MainActivity" android:screenOrientation="unspecified" android:configChanges="orientation|screenSize|keyboardHidden" android:exported="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity>
-  <activity-alias android:name=".CalculatorAlias" android:targetActivity=".MainActivity" android:label="Calculator" android:icon="@drawable/ic_calculator" android:roundIcon="@drawable/ic_calculator" android:enabled="false" android:exported="true">
+  <activity-alias android:name=".CalculatorAlias" android:targetActivity=".MainActivity" android:label="Calculator" android:icon="@drawable/ic_calculator" android:enabled="false" android:exported="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity-alias>
  </application>
