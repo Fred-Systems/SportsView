@@ -38,7 +38,7 @@ class MainActivity : Activity() {
    allowFileAccess=false
    allowContentAccess=false
    mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
-   userAgentString=userAgentString+" SportsView/1.3"
+   userAgentString=userAgentString+" SportsView/1.4"
   }
 
   val assetLoader=WebViewAssetLoader.Builder()
@@ -91,6 +91,15 @@ class MainActivity : Activity() {
  }
 
  inner class AppBridge {
+  @JavascriptInterface
+  fun setLandscape(enabled:Boolean) {
+   runOnUiThread {
+    requestedOrientation=
+     if(enabled) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+     else ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+   }
+  }
+
   @JavascriptInterface
   fun loadVideos(league:String,pageToken:String?) {
    executor.execute {
@@ -145,7 +154,7 @@ class MainActivity : Activity() {
       connectTimeout=10000
       readTimeout=15000
       setRequestProperty("Accept","application/vnd.github+json")
-      setRequestProperty("User-Agent","SportsView/1.3")
+      setRequestProperty("User-Agent","SportsView/1.4")
      }
      val j=JSONObject(c.inputStream.bufferedReader().use{it.readText()})
      c.disconnect()
@@ -192,7 +201,7 @@ class MainActivity : Activity() {
     connectTimeout=15000
     readTimeout=20000
     setRequestProperty("Accept","application/json")
-    setRequestProperty("User-Agent","SportsView/1.3")
+    setRequestProperty("User-Agent","SportsView/1.4")
    }
 
    try{
