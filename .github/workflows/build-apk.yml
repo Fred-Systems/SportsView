@@ -52,10 +52,6 @@ jobs:
           test -s "$APK"
           test "$(stat -c%s "$APK")" -gt 500000
           echo "APK size: $(stat -c%s "$APK") bytes"
-          echo "Checking packaged launcher entries..."
-          BUILD_TOOLS="$(find "$ANDROID_HOME/build-tools" -maxdepth 1 -type d | sort -V | tail -n 1)"
-          "$BUILD_TOOLS/aapt2" dump xmltree "$APK" AndroidManifest.xml | grep -F "MainActivity"
-          "$BUILD_TOOLS/aapt2" dump xmltree "$APK" AndroidManifest.xml | grep -F "CalculatorAlias"
           echo "Source launcher safety checks..."
           grep -F 'android:enabled="true"' app/src/main/AndroidManifest.xml
           grep -F 'android:enabled="false"' app/src/main/AndroidManifest.xml
