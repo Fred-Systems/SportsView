@@ -95,7 +95,6 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun openSportsView() {
             runOnUiThread {
-                setCalculatorLauncher(false)
                 val i = Intent(this@MainActivity, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 }
@@ -199,38 +198,59 @@ class MainActivity : Activity() {
             }
         }
 
-        @JavascriptInterface fun configureCalculator() {
-            runOnUiThread {
-                val input = EditText(this@MainActivity).apply {
-                    inputType = InputType.TYPE_CLASS_NUMBER
-                    hint = "4–12 digit code"
-                    setSingleLine(true)
-                    filters = arrayOf(android.text.InputFilter.LengthFilter(12))
-                    setPadding(32, 20, 32, 20)
-                }
-                AlertDialog.Builder(this@MainActivity)
-                    .setTitle("Calculator mode")
-                    .setMessage("Set the code that opens SportsView from the Calculator.")
-                    .setView(input)
-                    .setNegativeButton("Cancel", null)
-                    .setPositiveButton("Save") { _, _ ->
-                        val code = input.text.toString()
-                        if (!code.matches(Regex("\\d{4,12}"))) {
-                            AlertDialog.Builder(this@MainActivity).setTitle("Invalid code").setMessage("Use 4–12 digits.").setPositiveButton("OK", null).show()
-                        } else if (saveCalculatorCode(code)) {
+        private fun calculatorLauncherEnabled(): Boolean =
+            packageManager.getComponentEnabledSetting(calculatorAlias) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+
+        private fun showCalculatorCodeDialog(disableAfterSuccess: Boolean) {
+            val input = EditText(this@MainActivity).apply {
+                inputType = InputType.TYPE_CLASS_NUMBER
+                hint = if (disableAfterSuccess) "Enter current 4–12 digit code" else "4–12 digit code"
+                setSingleLine(true)
+                filters = arrayOf(android.text.InputFilter.LengthFilter(12))
+                setPadding(32, 20, 32, 20)
+            }
+            val active = calculatorLauncherEnabled()
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle(if (active) "Exit Calculator mode" else "Calculator mode")
+                .setMessage(
+                    if (active) "Enter your current calculator code to return the launcher to SportsView."
+                    else "Choose a 4–12 digit code. The Calculator icon will remain active until you enter this code here again."
+                )
+                .setView(input)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton(if (active) "Reset to SportsView" else "Enable Calculator") { _, _ ->
+                    val code = input.text.toString()
+                    if (active) {
+                        if (verifyCalculatorCode(code)) {
+                            setCalculatorLauncher(false)
+                            send("window.closeSettings();")
+                        } else {
+                            AlertDialog.Builder(this@MainActivity)
+                                .setTitle("Incorrect code")
+                                .setMessage("That code is not correct.")
+                                .setPositiveButton("OK", null).show()
+                        }
+                    } else if (code.matches(Regex("\\d{4,12}"))) {
+                        if (saveCalculatorCode(code)) {
                             setCalculatorLauncher(true)
                             startActivity(Intent(this@MainActivity, CalculatorActivity::class.java))
                             finish()
                         }
-                    }.show()
-            }
+                    } else {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Invalid code")
+                            .setMessage("Use 4–12 digits.")
+                            .setPositiveButton("OK", null).show()
+                    }
+                }.show()
+        }
+
+        @JavascriptInterface fun configureCalculator() {
+            runOnUiThread { showCalculatorCodeDialog(calculatorLauncherEnabled()) }
         }
 
         @JavascriptInterface fun disableCalculatorMode() {
-            runOnUiThread {
-                setCalculatorLauncher(false)
-                send("window.closeSettings();")
-            }
+            runOnUiThread { showCalculatorCodeDialog(true) }
         }
 
         @JavascriptInterface fun openUrl(url: String) {
