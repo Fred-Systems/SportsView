@@ -85,16 +85,19 @@ class MainActivity : Activity() {
       (view.parent as? android.view.ViewGroup)?.removeView(view)
       view.destroy()
      }catch(_:Exception){}
-     web=WebView(this@MainActivity)
-     setContentView(web)
-     web.settings.javaScriptEnabled=true
-     web.settings.domStorageEnabled=true
-     web.webViewClient=this
-     web.addJavascriptInterface(AppBridge(),"Android")
-     web.loadUrl(
-      "https://appassets.androidplatform.net/assets/index.html",
-      mapOf("Referer" to "https://com.fredsystems.sportsviewer/")
-     )
+     val message=if(detail.didCrash())
+      "SportsView's video/web renderer stopped unexpectedly. The app is still running."
+     else
+      "SportsView's web renderer was stopped by Android to recover memory."
+     val fallback=android.widget.TextView(this@MainActivity).apply{
+      text=message+"\n\nPlease reopen SportsView. Your app data is safe."
+      textSize=16f
+      setTextColor(android.graphics.Color.WHITE)
+      setBackgroundColor(android.graphics.Color.rgb(6,9,18))
+      gravity=android.view.Gravity.CENTER
+      setPadding(48,48,48,48)
+     }
+     setContentView(fallback)
     }
     return true
    }
