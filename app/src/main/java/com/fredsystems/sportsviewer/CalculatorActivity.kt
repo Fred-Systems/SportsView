@@ -178,11 +178,6 @@ class CalculatorActivity : Activity() {
         val saved = prefs.getString("calculator_code", null)
         if (saved != null && code.matches(Regex("\\d{4,12}")) && code == saved) {
             prefs.edit().putBoolean("calculator_authenticated", true).apply()
-            packageManager.setComponentEnabledSetting(
-                android.content.ComponentName(this, "com.fredsystems.sportsviewer.MainActivity"),
-                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                android.content.pm.PackageManager.DONT_KILL_APP
-            )
             startActivity(Intent(this, MainActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             })
