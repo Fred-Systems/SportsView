@@ -11,8 +11,8 @@ android {
         applicationId = "com.fredsystems.sportsviewer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.6"
+        versionCode = 7
+        versionName = "1.6.1"
     }
 
     compileOptions {
@@ -45,6 +45,5 @@ android {
 }
 
 dependencies {
-    implementation("androidx.webkit:webkit:1.16.0")
-    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.webkit:webkit:1.12.1")
 }
