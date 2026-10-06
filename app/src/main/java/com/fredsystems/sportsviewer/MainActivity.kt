@@ -113,6 +113,21 @@ class MainActivity : Activity() {
             }
         }
 
+        @JavascriptInterface fun downloadAndInstall(apkUrl: String, tag: String) {
+            try {
+                val request = DownloadManager.Request(Uri.parse(apkUrl))
+                    .setTitle("SportsView $tag")
+                    .setDescription("Downloading update")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalFilesDir(this@MainActivity, Environment.DIRECTORY_DOWNLOADS, "SportsView-$tag.apk")
+                    .setMimeType("application/vnd.android.package-archive")
+                (getSystemService(DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
+                send("window.receiveUpdateInstallError(" + JSONObject.quote("Update download started. Open the downloaded APK from your notification to install it.") + ");")
+            } catch (e: Exception) {
+                send("window.receiveUpdateInstallError(" + JSONObject.quote(e.message ?: "Could not download update.") + ");")
+            }
+        }
+
         @JavascriptInterface fun setLandscape(enabled: Boolean) {
             runOnUiThread {
                 requestedOrientation = if (enabled) ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
