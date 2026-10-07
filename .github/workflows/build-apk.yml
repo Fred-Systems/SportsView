@@ -72,11 +72,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION=$(grep -E 'versionName = "[^"]+"' app/build.gradle.kts | sed -E 's/.*versionName = "([^"]+)".*/\\1/')
+          VERSION=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)
+          test -n "$VERSION"
           TAG="v$VERSION"
           echo "Publishing SportsView $TAG"
-          gh release create "$TAG" app/build/outputs/apk/release/*.apk \
-            --title "SportsView $VERSION" \
-            --notes "SportsView $VERSION" \
-            --latest || \
-          gh release upload "$TAG" app/build/outputs/apk/release/*.apk --clobber
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; replacing APK."
+            gh release upload "$TAG" app/build/outputs/apk/release/app-release.apk --clobber
+          else
+            gh release create "$TAG" app/build/outputs/apk/release/app-release.apk \
+              --title "SportsView $VERSION" \
+              --notes "SportsView $VERSION" \
+              --latest
+          fi
