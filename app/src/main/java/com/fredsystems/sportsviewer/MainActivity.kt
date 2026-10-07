@@ -19,6 +19,7 @@ import android.webkit.WebChromeClient
 import android.text.InputType
 import android.widget.EditText
 import java.net.HttpURLConnection
+import java.nio.charset.StandardCharsets
 import java.net.URL
 import java.net.URLEncoder
 import java.util.concurrent.Executors
@@ -43,7 +44,14 @@ class MainActivity : Activity() {
         webView.webChromeClient = WebChromeClient()
         webView.addJavascriptInterface(AppBridge(), "Android")
         setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
+        val html = assets.open("index.html").bufferedReader(StandardCharsets.UTF_8).use { it.readText() }
+        webView.loadDataWithBaseURL(
+            "https://com.fredsystems.sportsviewer/",
+            html,
+            "text/html",
+            "UTF-8",
+            "https://com.fredsystems.sportsviewer/"
+        )
     }
 
     inner class AppBridge {
@@ -54,7 +62,7 @@ class MainActivity : Activity() {
                     val data = try {
                         httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
                     } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true) && pageToken.isNullOrBlank()) fetchNflMirror() else throw e
+                        if (league.equals("NFL", ignoreCase = true)) fetchNflMirror(pageToken) else throw e
                     }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -297,12 +305,19 @@ class MainActivity : Activity() {
             }
         }
 
-        private fun fetchNflMirror(): String {
-            return httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")
+        private fun fetchNflMirror(pageToken: String?): String {
+            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
+            val start = pageToken?.toIntOrNull() ?: 0
+            val end = minOf(start + 50, source.length())
+            val page = JSONArray()
+            for (i in start until end) page.put(source.getJSONObject(i))
+            val result = JSONObject().put("videos", page)
+            if (end < source.length()) result.put("nextPageToken", end.toString())
+            return result.toString()
         }
 
         private fun searchNflMirror(query: String): String {
-            val source = JSONObject(fetchNflMirror()).optJSONArray("videos") ?: JSONArray()
+            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
             val filtered = JSONArray()
             val q = query.trim().lowercase()
             for (i in 0 until source.length()) {
