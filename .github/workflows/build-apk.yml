@@ -40,6 +40,12 @@ jobs:
             -keypass "$KEY_PASSWORD" \
             -dname "CN=Fred-Systems, OU=SportsView, O=Fred-Systems, C=US"
 
+      - name: Prepare launcher icons
+        run: |
+          mkdir -p app/src/main/res/drawable-nodpi
+          cp SportsView_icon_picture.png app/src/main/res/drawable-nodpi/sportsview_launcher.png
+          cp Calculator_icon_picture.png app/src/main/res/drawable-nodpi/calculator_launcher.png
+
       - name: Build signed release APK
         env:
           SPORTSVIEW_KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD }}
