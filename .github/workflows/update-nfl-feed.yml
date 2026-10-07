@@ -21,25 +21,34 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
         run: |
-          test -n "$YOUTUBE_API_KEY"
+          set +e
           python - <<'PY'
-          import json, os, urllib.parse, urllib.request
+          import json, os, urllib.parse, urllib.request, urllib.error
+
+          key = os.environ.get("YOUTUBE_API_KEY", "")
+          if not key:
+              print("YOUTUBE_API_KEY is not configured; keeping existing NFL mirror.")
+              raise SystemExit(0)
 
           params = urllib.parse.urlencode({
               "part": "snippet",
               "playlistId": "UUDVYQ4Zhbm3S2dlz7P1xGg",
               "maxResults": "50",
-              "key": os.environ["YOUTUBE_API_KEY"]
+              "key": key
           })
           url = "https://www.googleapis.com/youtube/v3/playlistItems?" + params
-          req = urllib.request.Request(url, headers={"User-Agent": "SportsView-NFL-Feed/1.0"})
-          with urllib.request.urlopen(req, timeout=30) as response:
-              data = json.load(response)
+          try:
+              req = urllib.request.Request(url, headers={"User-Agent": "SportsView-NFL-Feed/1.0"})
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  data = json.load(response)
+          except Exception as e:
+              print(f"YouTube API unavailable ({e}); keeping existing NFL mirror.")
+              raise SystemExit(0)
 
           videos = []
           for item in data.get("items", []):
-              vid = item.get("snippet", {}).get("resourceId", {}).get("videoId", "")
               snippet = item.get("snippet", {})
+              vid = snippet.get("resourceId", {}).get("videoId", "")
               if vid:
                   videos.append({
                       "id": vid,
@@ -49,14 +58,14 @@ jobs:
                           or f"https://i.ytimg.com/vi/{vid}/hqdefault.jpg"
                   })
 
-          if not videos:
-              print("YouTube API returned no videos; preserving existing mirror.")
-          else:
+          if videos:
               with open("nfl_videos.json", "w", encoding="utf-8") as f:
                   json.dump({"videos": videos}, f, ensure_ascii=False, indent=2)
                   f.write("\n")
+              print(f"Updated NFL mirror with {len(videos)} videos.")
+          else:
+              print("YouTube API returned no videos; keeping existing NFL mirror.")
           PY
-
       - name: Commit refreshed feed
         run: |
           git config user.name "Fred-Systems"
