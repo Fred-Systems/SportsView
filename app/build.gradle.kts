@@ -3,6 +3,11 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
 val copyLauncherPictures = tasks.register<Copy>("copyLauncherPictures") {
     from(project.layout.projectDirectory) {
         include("SportsView_icon_picture.png")
@@ -45,7 +50,6 @@ android {
 
     buildFeatures { buildConfig = true }
 
-    tasks.named("preBuild").configure { dependsOn(copyLauncherPictures) }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 
     buildTypes {
