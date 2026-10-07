@@ -1,24 +1,16 @@
-import java.net.URL
-
-val downloadLauncherPictures = tasks.register("downloadLauncherPictures") {
-    doLast {
-        val outDir = file("src/main/res/drawable-nodpi")
-        outDir.mkdirs()
-        val files = mapOf(
-            "sportsview_launcher.png" to "https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/SportsView_icon_picture.png",
-            "calculator_launcher.png" to "https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/Calculator_icon_picture.png"
-        )
-        files.forEach { (name, url) ->
-            URL(url).openStream().use { input ->
-                file(outDir.resolve(name)).outputStream().use { output -> input.copyTo(output) }
-            }
-        }
-    }
-}
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+}
+
+val copyLauncherPictures = tasks.register<Copy>("copyLauncherPictures") {
+    from(project.layout.projectDirectory) {
+        include("SportsView_icon_picture.png")
+        include("Calculator_icon_picture.png")
+    }
+    into(project.layout.projectDirectory.dir("app/src/main/res/drawable-nodpi"))
+    rename("SportsView_icon_picture.png", "sportsview_launcher.png")
+    rename("Calculator_icon_picture.png", "calculator_launcher.png")
 }
 
 android {
@@ -53,7 +45,7 @@ android {
 
     buildFeatures { buildConfig = true }
 
-    tasks.named("preBuild").configure { dependsOn(downloadLauncherPictures) }
+    tasks.named("preBuild").configure { dependsOn(copyLauncherPictures) }
     packaging { resources.excludes += "/META-INF/{AL2.0,LGPL2.1}" }
 
     buildTypes {
