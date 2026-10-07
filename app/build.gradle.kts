@@ -3,21 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
-
-val copyLauncherPictures = tasks.register<Copy>("copyLauncherPictures") {
-    from(project.layout.projectDirectory) {
-        include("SportsView_icon_picture.png")
-        include("Calculator_icon_picture.png")
-    }
-    into(project.layout.projectDirectory.dir("app/src/main/res/drawable-nodpi"))
-    rename("SportsView_icon_picture.png", "sportsview_launcher.png")
-    rename("Calculator_icon_picture.png", "calculator_launcher.png")
-}
-
 android {
     namespace = "com.fredsystems.sportsviewer"
     compileSdk = 35
