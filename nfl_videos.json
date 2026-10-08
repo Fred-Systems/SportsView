@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "7tfa45OVOdQ",
+      "title": "49ers vs Seahawks Week 5 Preview | NFL Daily",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/7tfa45OVOdQ/hqdefault.jpg"
+    },
+    {
       "id": "jZzMvDgW-ss",
       "title": "The NFL Report: The Top 5 Things Heading into Week 5 + Lamar is out and Jayden is Back",
       "publishedAt": "",
@@ -20,7 +26,7 @@
     },
     {
       "id": "61k5yzde7rw",
-      "title": "Week 4 Mic'd Up! \"I ain't eat no breakfast\" | Game Day All Access",
+      "title": "Week 4 Mic'd Up! \"Don't be scared. don't be scared. don't be scared\" | Game Day All Access",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/61k5yzde7rw/hqdefault.jpg"
     },
@@ -593,12 +599,6 @@
       "title": "KIRK COUSINS LETS IT FLY TO IAN THOMAS FOR THE TD",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/3FAj4xs4gNM/hqdefault.jpg"
-    },
-    {
-      "id": "i_JTbOcIiqY",
-      "title": "CeeDee Lamb's best plays from 17-catch, 189-yard game | Week 4",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/i_JTbOcIiqY/hqdefault.jpg"
     }
   ]
 }
