@@ -94,6 +94,24 @@ jobs:
                   except Exception as e:
                       print(f"Piped instance failed {base}: {e}")
               if not videos:
+                  # Last-resort extractor for recent official NFL uploads.
+                  try:
+                      import subprocess
+                      subprocess.run(["python","-m","pip","install","-q","yt-dlp"], check=False)
+                      result = subprocess.run(
+                          ["yt-dlp","--flat-playlist","--dump-single-json","--playlist-end","100",
+                           "--extractor-args","youtube:player_client=web_safari",
+                           "https://www.youtube.com/@NFL/videos"],
+                          capture_output=True, text=True, timeout=180
+                      )
+                      data = json.loads(result.stdout) if result.stdout.strip() else {}
+                      for item in data.get("entries",[]) or []:
+                          add_video(item.get("id",""), item.get("title",""), item.get("upload_date",""), None)
+                      print(f"yt-dlp fallback returned {len(videos)} NFL videos.")
+                  except Exception as e:
+                      print(f"yt-dlp fallback failed: {e}")
+
+              if not videos:
                   print("All NFL feed sources failed; keeping existing mirror.")
                   raise SystemExit(0)
 
