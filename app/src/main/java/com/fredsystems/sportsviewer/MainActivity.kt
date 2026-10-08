@@ -139,6 +139,24 @@ class MainActivity : Activity() {
                             break
                         }
                     }
+                    runOnUiThread {
+                        val title = if (tag == current) "SportsView is up to date" else "SportsView update available"
+                        val message = if (tag == current) {
+                            "You are running " + current + ". There is no newer release."
+                        } else {
+                            "Installed: " + current + "\nLatest: " + tag + "\n\n" + if (apkUrl.isBlank()) "The release is available, but no APK asset was found." else "You can download or install the new APK now."
+                        }
+                        val builder = AlertDialog.Builder(this@MainActivity).setTitle(title).setMessage(message)
+                        if (tag != current && apkUrl.isNotBlank()) {
+                            builder.setPositiveButton("Install now") { _, _ -> downloadAndInstall(apkUrl, tag) }
+                                .setNeutralButton("Download APK") { _, _ -> openUrl(apkUrl) }
+                                .setNegativeButton("Later", null)
+                        } else {
+                            builder.setPositiveButton("OK", null)
+                        }
+                        builder.show()
+                    }
+
                     val result = JSONObject().apply {
                         put("tag", tag)
                         put("name", name)
@@ -152,6 +170,57 @@ class MainActivity : Activity() {
                     val result = JSONObject().put("error", "Update check failed: " + (e.message ?: "network error"))
                     send("window.receiveUpdateCheck(" + JSONObject.quote(result.toString()) + ");")
                 }
+            }
+        }
+
+        @JavascriptInterface fun openSettingsNative() {
+            runOnUiThread {
+                val options = arrayOf("Appearance","Accent color","Animations","Landscape video mode","Viewer size","Calculator mode","Updates")
+                AlertDialog.Builder(this@MainActivity).setTitle("SportsView Settings").setItems(options) { _, which ->
+                    when (which) {
+                        0 -> showAppearanceDialog()
+                        1 -> showAccentDialog()
+                        2 -> send("window.toggleSetting('animations');")
+                        3 -> send("window.toggleLandscape();")
+                        4 -> showViewerDialog()
+                        5 -> showCalculatorCodeDialog(calculatorLauncherEnabled())
+                        6 -> checkForUpdates()
+                    }
+                }.setNegativeButton("Close", null).show()
+            }
+        }
+
+        private fun showAppearanceDialog() {
+            val items = arrayOf("Dark","Light","System")
+            AlertDialog.Builder(this@MainActivity).setTitle("Appearance").setItems(items) { _, which ->
+                send("window.setThemeFromAndroid(" + JSONObject.quote(items[which].lowercase()) + ");")
+            }.show()
+        }
+
+        private fun showAccentDialog() {
+            val items = arrayOf("Emerald","Violet","Blue","Orange")
+            val colors = arrayOf("#19d3ae","#6c63ff","#3b82f6","#f97316")
+            AlertDialog.Builder(this@MainActivity).setTitle("Accent color").setItems(items) { _, which ->
+                send("window.setAccentFromAndroid(" + JSONObject.quote(colors[which]) + ");")
+            }.show()
+        }
+
+        private fun showViewerDialog() {
+            val items = arrayOf("Compact","Standard","Cinema")
+            val values = arrayOf("compact","standard","cinema")
+            AlertDialog.Builder(this@MainActivity).setTitle("Viewer size").setItems(items) { _, which ->
+                send("window.setViewerFromAndroid(" + JSONObject.quote(values[which]) + ");")
+            }.show()
+        }
+
+        @JavascriptInterface fun setViewerMode(mode: String) {
+            runOnUiThread {
+                val safe = when (mode.lowercase()) {
+                    "compact" -> "compact"
+                    "cinema" -> "cinema"
+                    else -> "standard"
+                }
+                send("window.setViewerFromAndroid(" + JSONObject.quote(safe) + ");")
             }
         }
 
