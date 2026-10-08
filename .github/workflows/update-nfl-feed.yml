@@ -67,7 +67,7 @@ jobs:
           # Piped is only used as a metadata fallback. The IDs still point to
           # the official NFL YouTube uploads when the user plays a video.
           if not videos:
-              instances=["https://pipedapi.kavin.rocks","https://api.piped.yt","https://pipedapi.leptons.xyz","https://pipedapi.adminforge.de"]
+              instances=["https://pipedapi.kavin.rocks","https://pipedapi.tokhmi.xyz","https://pipedapi.moomoo.me","https://pipedapi.syncpundit.io","https://api-piped.mha.fi","https://piped-api.garudalinux.org","https://piped-api.hostux.net","https://pdapi.vern.cc","https://pipedapi.pfcd.me","https://pipedapi.frontendfriendly.xyz","https://api.piped.yt","https://pipedapi.astartes.nl","https://pipedapi.osphost.fi","https://pipedapi.simpleprivacy.fr"]
               for base in instances:
                   try:
                       nextpage=None
