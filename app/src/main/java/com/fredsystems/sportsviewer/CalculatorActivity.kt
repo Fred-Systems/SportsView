@@ -26,6 +26,7 @@ class CalculatorActivity : Activity() {
     private var expression = "Ready"
     private var advanced = false
     private var degrees = true
+    private var memory = 0.0
 
     private data class Snapshot(val value:String,val stored:Double?,val operation:String?,val resetInput:Boolean,val expression:String,val advanced:Boolean,val degrees:Boolean)
     private val history = ArrayDeque<Snapshot>()
@@ -60,12 +61,12 @@ class CalculatorActivity : Activity() {
     private fun rebuildGrid() {
         val grid=(valueView.parent as LinearLayout).getChildAt(3) as GridLayout
         grid.removeAllViews()
-        val keys=if(advanced) listOf("C","⌫","(",")","sin","cos","tan","÷","asin","acos","atan","×","ln","log","√","−","x²","xʸ","1/x","+","π","e","%","=","7","8","9",".","4","5","6","±","1","2","3","","0","","","")
+        val keys=if(advanced) listOf("C","⌫","M+","M-","MR","MC","sin","cos","tan","÷","asin","acos","atan","×","ln","log","√","−","x²","xʸ","x!","1/x","+","abs","floor","ceil","π","e","%","=","7","8","9",".","4","5","6","±","1","2","3","","0","","","")
         else listOf("C","⌫","%","÷","7","8","9","×","4","5","6","−","1","2","3","+","0",".","=","")
         for(key in keys) {
             val b=Button(this).apply {
                 text=key; textSize=if(key.length>2)13f else 20f; isAllCaps=false
-                setTextColor(if(key in listOf("+","−","×","÷","=","sin","cos","tan","asin","acos","atan","ln","log","√","x²","xʸ","1/x")) Color.rgb(42,210,174) else Color.WHITE)
+                setTextColor(if(key in listOf("+","−","×","÷","=","sin","cos","tan","asin","acos","atan","ln","log","√","x²","xʸ","x!","1/x","abs","floor","ceil","M+","M-","MR","MC")) Color.rgb(42,210,174) else Color.WHITE)
                 setOnClickListener { if(key.isNotEmpty()) press(key) }
                 if(key.isEmpty()) visibility=View.INVISIBLE
             }
@@ -85,9 +86,13 @@ class CalculatorActivity : Activity() {
             "."->{saveState();decimal()}
             "%"->{saveState();percent()}
             "±"->{saveState();toggleSign()}
+            "M+"->{saveState();memory += parse() ?: 0.0; expression="Memory +" }
+            "M-"->{saveState();memory -= parse() ?: 0.0; expression="Memory −" }
+            "MR"->{saveState();value=format(memory);resetInput=true;expression="Memory recall"}
+            "MC"->{saveState();memory=0.0;expression="Memory cleared"}
             "+","−","×","÷"->{saveState();setOperation(key)}
             "="->{saveState();equalsKey()}
-            "sin","cos","tan","asin","acos","atan","ln","log","√","x²","1/x"->{saveState();unary(key)}
+            "sin","cos","tan","asin","acos","atan","ln","log","√","x²","x!","1/x","abs","floor","ceil"->{saveState();unary(key)}
             "xʸ"->{saveState();setOperation("^")}
             "π"->{saveState();constant(Math.PI,"π")}
             "e"->{saveState();constant(Math.E,"e")}
@@ -119,9 +124,15 @@ class CalculatorActivity : Activity() {
 
     private fun unary(fn:String) {
         val n=parse()?:return
-        val r=when(fn){"sin"->sin(angle(n));"cos"->cos(angle(n));"tan"->tan(angle(n));"asin"->inverseAngle(asin(n));"acos"->inverseAngle(acos(n));"atan"->inverseAngle(atan(n));"ln"->if(n>0)ln(n)else Double.NaN;"log"->if(n>0)log10(n)else Double.NaN;"√"->if(n>=0)sqrt(n)else Double.NaN;"x²"->n*n;"1/x"->if(n!=0.0)1.0/n else Double.NaN;else->Double.NaN}
+        val r=when(fn){"sin"->sin(angle(n));"cos"->cos(angle(n));"tan"->tan(angle(n));"asin"->inverseAngle(asin(n));"acos"->inverseAngle(acos(n));"atan"->inverseAngle(atan(n));"ln"->if(n>0)ln(n)else Double.NaN;"log"->if(n>0)log10(n)else Double.NaN;"√"->if(n>=0)sqrt(n)else Double.NaN;"x²"->n*n;"x!"->factorial(n)
+            "1/x"->if(n!=0.0)1.0/n else Double.NaN
+            "abs"->abs(n)
+            "floor"->floor(n)
+            "ceil"->ceil(n)
+            else->Double.NaN}
         if(!r.isFinite()){value="Error";expression=fn+"("+format(n)+") → Error";resetInput=true}else{value=format(r);expression=fn+"("+format(n)+") =";resetInput=true}
     }
+    private fun factorial(n:Double):Double { if(n<0||n>170||n%1.0!=0.0)return Double.NaN; var r=1.0; var i=2; while(i<=n.toInt()){r*=i;i++}; return r }
     private fun angle(n:Double)=if(degrees)Math.toRadians(n)else n
     private fun inverseAngle(n:Double)=if(degrees)Math.toDegrees(n)else n
 
