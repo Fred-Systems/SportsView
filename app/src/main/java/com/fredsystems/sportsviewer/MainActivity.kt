@@ -397,10 +397,7 @@ class MainActivity : Activity() {
             val instances = listOf(
                 "https://pipedapi.kavin.rocks",
                 "https://pipedapi.tokhmi.xyz",
-                "https://pipedapi.moomoo.me",
-                "https://pipedapi.syncpundit.io",
-                "https://api-piped.mha.fi",
-                "https://piped-api.garudalinux.org"
+                "https://api.piped.yt"
             )
             val channelId = "UCDVYQ4Zhbm3S2dlz7P1xGg"
             for (base in instances) {
@@ -408,21 +405,16 @@ class MainActivity : Activity() {
                     val all = JSONArray()
                     var nextPage: String? = null
                     var pageCount = 0
-                    while (pageCount < 30) {
-                        val endpoint = if (nextPage == null) {
-                            "$base/channel/$channelId"
-                        } else {
-                            "$base/nextpage/channel/$channelId?nextpage=" +
-                                java.net.URLEncoder.encode(nextPage, "UTF-8")
-                        }
-                        val data = JSONObject(httpGet(endpoint))
+                    while (pageCount < 8 && all.length() < 25) {
+                        val endpoint = if (nextPage == null) "$base/channel/$channelId"
+                        else "$base/nextpage/channel/$channelId?nextpage=" + java.net.URLEncoder.encode(nextPage, "UTF-8")
+                        val data = JSONObject(httpGetFast(endpoint, 5000))
                         val streams = data.optJSONArray("relatedStreams") ?: JSONArray()
                         for (i in 0 until streams.length()) {
+                            if (all.length() >= 25) break
                             val item = streams.getJSONObject(i)
                             val path = item.optString("url")
-                            val videoId = if (path.contains("v=")) {
-                                path.substringAfter("v=").substringBefore("&")
-                            } else ""
+                            val videoId = if (path.contains("v=")) path.substringAfter("v=").substringBefore("&") else ""
                             if (videoId.isNotBlank()) {
                                 all.put(JSONObject().apply {
                                     put("id", videoId)
@@ -436,20 +428,38 @@ class MainActivity : Activity() {
                         pageCount++
                         if (nextPage == null || streams.length() == 0) break
                     }
-                    if (all.length() > 6) return all
-                } catch (_: Exception) {
-                }
+                    if (all.length() >= 15) return all
+                } catch (_: Exception) {}
             }
             return JSONArray()
+        }
+
+        private fun httpGetFast(url: String, timeout: Int): String {
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = timeout
+            connection.readTimeout = timeout
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("User-Agent", "SportsView/1.8.5")
+            try {
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val body = (stream ?: connection.inputStream).bufferedReader().use { it.readText() }
+                if (code !in 200..299) throw IllegalStateException("HTTP $code")
+                return body
+            } finally { connection.disconnect() }
         }
 
         private fun fetchNflMirror(pageToken: String?): String {
             val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
             if (source.length() <= 6 && pageToken == null) {
                 val piped = fetchPipedNfl()
-                if (piped.length() > source.length()) {
+                if (piped.length() >= 15) {
                     return JSONObject().put("videos", piped).toString()
                 }
+                // Never leave the NFL tab spinning while a long historical lookup
+                // is unavailable. Return the known official recent mirror immediately.
+                return JSONObject().put("videos", source).toString()
             }
             val start = pageToken?.toIntOrNull() ?: 0
             val end = minOf(start + 50, source.length())
