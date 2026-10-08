@@ -5,7 +5,7 @@
  <application android:name="com.fredsystems.sportsviewer.SportsViewApplication" android:theme="@style/AppTheme" android:label="SportsView" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="false" android:hardwareAccelerated="true">
   <activity android:name=".CalculatorActivity" android:exported="false" android:screenOrientation="portrait" />
   <activity android:name=".MainActivity" android:enabled="true" android:screenOrientation="unspecified" android:configChanges="orientation|screenSize|keyboardHidden" android:exported="false" />
-  <activity-alias android:name=".SportsViewLauncher" android:targetActivity=".MainActivity" android:label="SportsView" android:icon="@drawable/sportsview_launcher" android:enabled="true" android:exported="true">
+  <activity-alias android:name=".SportsViewLauncher" android:targetActivity=".MainActivity" android:label="SportsView" android:icon="@drawable/ic_launcher" android:enabled="true" android:exported="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity-alias>
   <activity-alias android:name=".CalculatorLauncher" android:targetActivity=".CalculatorActivity" android:label="Calculator" android:icon="@drawable/calculator_icon_picture" android:enabled="false" android:exported="true">
