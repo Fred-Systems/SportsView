@@ -175,16 +175,17 @@ class MainActivity : Activity() {
 
         @JavascriptInterface fun openSettingsNative() {
             runOnUiThread {
-                val options = arrayOf("Appearance","Accent color","Animations","Landscape video mode","Viewer size","Calculator mode","Updates")
+                val options = arrayOf("Appearance","Accent color","Animations","Landscape video mode","Video player method","Viewer size","Calculator mode","Updates")
                 AlertDialog.Builder(this@MainActivity).setTitle("SportsView Settings").setItems(options) { _, which ->
                     when (which) {
                         0 -> showAppearanceDialog()
                         1 -> showAccentDialog()
                         2 -> send("window.toggleSetting('animations');")
                         3 -> send("window.toggleLandscape();")
-                        4 -> showViewerDialog()
-                        5 -> showCalculatorCodeDialog(calculatorLauncherEnabled())
-                        6 -> checkForUpdates()
+                        4 -> showPlayerMethodDialog()
+                        5 -> showViewerDialog()
+                        6 -> showCalculatorCodeDialog(calculatorLauncherEnabled())
+                        7 -> checkForUpdates()
                     }
                 }.setNegativeButton("Close", null).show()
             }
@@ -203,6 +204,24 @@ class MainActivity : Activity() {
             AlertDialog.Builder(this@MainActivity).setTitle("Accent color").setItems(items) { _, which ->
                 send("window.setAccentFromAndroid(" + JSONObject.quote(colors[which]) + ");")
             }.show()
+        }
+
+        private fun showPlayerMethodDialog() {
+            val items = arrayOf("IFrame API","Direct Embed","Privacy Embed")
+            val values = arrayOf("api","embed","nocookie")
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Video player method")
+                .setSingleChoiceItems(items, -1) { dialog, which ->
+                    val method = values[which]
+                    send("window.setPlayerMethod(" + JSONObject.quote(method) + ");")
+                    dialog.dismiss()
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        @JavascriptInterface fun showPlayerMethodPicker() {
+            runOnUiThread { showPlayerMethodDialog() }
         }
 
         private fun showViewerDialog() {
