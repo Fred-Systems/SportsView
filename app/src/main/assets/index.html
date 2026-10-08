@@ -1,5 +1,6 @@
-function loadChannel(){videos=[];currentIndex=-1;nextPageToken=null;searchMode=false;searchQuery='';$('searchInput').value='';$('listName').textContent=league+' Videos';$('count').textContent='Loading…';$('list').innerHTML='<div class="notice">Loading official videos…</div>';updateSearchPlaceholder();if(window.Android){try{if(typeof window.Android.loadVideos==='function'){window.Android.loadVideos(league,null);return}}catch(e){}}loadWebsiteVideos(league,null)}
-<title>SportsView</title><link rel="icon" type="image/png" href="SportsView_icon_picture.png"><meta name="theme-color" content="#060912">
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SportsView</title><link rel="icon" type="image/png" href="SportsView_icon_picture.png"><meta name="theme-color" content="#060912">
 <style>
 :root{--accent:#19d3ae;--accent2:#6c63ff;--bg:#060912;--panel:rgba(16,22,35,.78);--panel2:rgba(22,30,46,.82);--text:#f7f9ff;--muted:#8490a5;--line:rgba(255,255,255,.08)}
 *{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;overflow-x:hidden;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:pan-y;overscroll-behavior-x:none}
