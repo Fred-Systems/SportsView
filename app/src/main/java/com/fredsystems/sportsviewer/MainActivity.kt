@@ -374,8 +374,64 @@ class MainActivity : Activity() {
             }
         }
 
+        private fun fetchPipedNfl(): JSONArray {
+            val instances = listOf(
+                "https://pipedapi.kavin.rocks",
+                "https://pipedapi.tokhmi.xyz",
+                "https://pipedapi.moomoo.me",
+                "https://pipedapi.syncpundit.io",
+                "https://api-piped.mha.fi",
+                "https://piped-api.garudalinux.org"
+            )
+            val channelId = "UCDVYQ4Zhbm3S2dlz7P1xGg"
+            for (base in instances) {
+                try {
+                    val all = JSONArray()
+                    var nextPage: String? = null
+                    var pageCount = 0
+                    while (pageCount < 30) {
+                        val endpoint = if (nextPage == null) {
+                            "$base/channel/$channelId"
+                        } else {
+                            "$base/nextpage/channel/$channelId?nextpage=" +
+                                java.net.URLEncoder.encode(nextPage, "UTF-8")
+                        }
+                        val data = JSONObject(httpGet(endpoint))
+                        val streams = data.optJSONArray("relatedStreams") ?: JSONArray()
+                        for (i in 0 until streams.length()) {
+                            val item = streams.getJSONObject(i)
+                            val path = item.optString("url")
+                            val videoId = if (path.contains("v=")) {
+                                path.substringAfter("v=").substringBefore("&")
+                            } else ""
+                            if (videoId.isNotBlank()) {
+                                all.put(JSONObject().apply {
+                                    put("id", videoId)
+                                    put("title", item.optString("title"))
+                                    put("publishedAt", item.optString("uploadedDate"))
+                                    put("thumbnail", item.optString("thumbnail"))
+                                })
+                            }
+                        }
+                        nextPage = data.optString("nextpage").takeIf { it.isNotBlank() }
+                        pageCount++
+                        if (nextPage == null || streams.length() == 0) break
+                    }
+                    if (all.length() > 6) return all
+                } catch (_: Exception) {
+                }
+            }
+            return JSONArray()
+        }
+
         private fun fetchNflMirror(pageToken: String?): String {
             val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
+            if (source.length() <= 6 && pageToken == null) {
+                val piped = fetchPipedNfl()
+                if (piped.length() > source.length()) {
+                    return JSONObject().put("videos", piped).toString()
+                }
+            }
             val start = pageToken?.toIntOrNull() ?: 0
             val end = minOf(start + 50, source.length())
             val page = JSONArray()
@@ -387,10 +443,11 @@ class MainActivity : Activity() {
 
         private fun searchNflMirror(query: String): String {
             val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
+            val base = if (source.length() <= 6) fetchPipedNfl() else source
             val filtered = JSONArray()
             val q = query.trim().lowercase()
-            for (i in 0 until source.length()) {
-                val video = source.getJSONObject(i)
+            for (i in 0 until base.length()) {
+                val video = base.getJSONObject(i)
                 if (video.optString("title").lowercase().contains(q)) filtered.put(video)
             }
             return JSONObject().put("videos", filtered).toString()
