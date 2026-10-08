@@ -44,7 +44,7 @@ jobs:
         run: |
           mkdir -p app/src/main/res/drawable-nodpi
           cp SportsView_icon_picture.png app/src/main/res/drawable-nodpi/sportsview_launcher.png
-          cp Calculator_icon_picture.png app/src/main/res/drawable-nodpi/calculator_launcher.png
+          # Calculator launcher currently uses the committed vector resource; the exact uploaded PNG is not present in this repository yet.
 
       - name: Build signed release APK
         env:
