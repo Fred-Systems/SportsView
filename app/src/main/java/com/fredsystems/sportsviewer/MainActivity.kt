@@ -59,10 +59,13 @@ class MainActivity : Activity() {
         fun loadVideos(league: String, pageToken: String?) {
             executor.execute {
                 try {
-                    val data = try {
+                    val data = if (league.equals("NFL", ignoreCase = true)) {
+                        // The NFL Worker has been intermittently returning HTTP 500.
+                        // Go straight to the fast NFL mirror/fallback instead of making
+                        // the user wait through a failing 15-second network request.
+                        fetchNflMirror(pageToken)
+                    } else {
                         httpGet(buildApiUrl("/videos", league.lowercase(), pageToken, null))
-                    } catch (e: Exception) {
-                        if (league.equals("NFL", ignoreCase = true)) fetchNflMirror(pageToken) else throw e
                     }
                     send("window.receiveVideos(" + JSONObject.quote(data) + ");")
                 } catch (e: Exception) {
@@ -394,21 +397,17 @@ class MainActivity : Activity() {
         }
 
         private fun fetchPipedNfl(): JSONArray {
-            val instances = listOf(
-                "https://pipedapi.kavin.rocks",
-                "https://pipedapi.tokhmi.xyz",
-                "https://api.piped.yt"
-            )
+            val instances = listOf("https://pipedapi.kavin.rocks","https://api.piped.yt")
             val channelId = "UCDVYQ4Zhbm3S2dlz7P1xGg"
             for (base in instances) {
                 try {
                     val all = JSONArray()
                     var nextPage: String? = null
                     var pageCount = 0
-                    while (pageCount < 8 && all.length() < 25) {
+                    while (pageCount < 3 && all.length() < 25) {
                         val endpoint = if (nextPage == null) "$base/channel/$channelId"
                         else "$base/nextpage/channel/$channelId?nextpage=" + java.net.URLEncoder.encode(nextPage, "UTF-8")
-                        val data = JSONObject(httpGetFast(endpoint, 5000))
+                        val data = JSONObject(httpGetFast(endpoint, 3000))
                         val streams = data.optJSONArray("relatedStreams") ?: JSONArray()
                         for (i in 0 until streams.length()) {
                             if (all.length() >= 25) break
