@@ -8,7 +8,7 @@ Polished Android video hub for the official NBA, NFL, and MLB YouTube channels.
 - Only video IDs returned from the selected official channel's uploads playlist are offered to the player
 - 10-second back/forward, seek bar, previous/next, fullscreen
 - No general YouTube home/search/browser
-- Developed by Fred-Systems
+- Developed by Fred-
 
 ## Official channel IDs
 - NBA: UCWJ2lWNubArHWmf3FIHbfcQ
