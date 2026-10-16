@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "bpVVgX3XUY8",
+      "title": "The NFL Report: Jalen Hurts out with Blood Clot + Lance Zierlein Joins the Show",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/bpVVgX3XUY8/hqdefault.jpg"
+    },
+    {
       "id": "DojNab5oFSk",
       "title": "Cowboys vs. Packers Week 6 SNF Preview | NFL Daily",
       "publishedAt": "",
@@ -593,12 +599,6 @@
       "title": "Minnesota Vikings vs New Orleans Saint Game Highlights | NFL 2026 Season Week 5",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/OeaSf-kDpYA/hqdefault.jpg"
-    },
-    {
-      "id": "p_DHFA3Sfys",
-      "title": "Cleveland Browns vs New York Jets Game Highlights | 2026 NFL Season Week 5",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/p_DHFA3Sfys/hqdefault.jpg"
     }
   ]
 }
