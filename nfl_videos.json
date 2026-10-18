@@ -1,6 +1,18 @@
 {
   "videos": [
     {
+      "id": "WVYQM7L1b1U",
+      "title": "Texans Takeaway in the Endzone!",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/WVYQM7L1b1U/hqdefault.jpg"
+    },
+    {
+      "id": "mtmsm5Pqecc",
+      "title": "Texans score after huge Nico Collins catch!",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/mtmsm5Pqecc/hqdefault.jpg"
+    },
+    {
       "id": "K4ABzH3B8R8",
       "title": "The NFL Report: Time to Panic for Seahawks? + Eagles Hire QB Joe Milton III",
       "publishedAt": "",
@@ -587,18 +599,6 @@
       "title": "Vidal slices through the Broncos' defense for a TD!",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/cemg0scqQHM/hqdefault.jpg"
-    },
-    {
-      "id": "Ol-6zOIm3Rc",
-      "title": "49ers Fumble Recovery TOUCHDOWN!",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/Ol-6zOIm3Rc/hqdefault.jpg"
-    },
-    {
-      "id": "0xq59JEWq_U",
-      "title": "Herbert calls Rucci's number for a Bolts' TD",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/0xq59JEWq_U/hqdefault.jpg"
     }
   ]
 }
