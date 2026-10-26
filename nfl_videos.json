@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "rgGZLfiYsfo",
+      "title": "Chiefs vs. Seahawks Week 7 SNF Recap | NFL Daily",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/rgGZLfiYsfo/hqdefault.jpg"
+    },
+    {
       "id": "kTaZ6-xQOgw",
       "title": "Saints vs. Steelers Week 7 Recap | NFL Daily",
       "publishedAt": "",
@@ -593,12 +599,6 @@
       "title": "Full Week 7 Game Previews | 2026 Season",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/_4hgpG_cbCE/hqdefault.jpg"
-    },
-    {
-      "id": "nDaP4FGrcT8",
-      "title": "Deion's Return to Atlanta! (49ers vs. Falcons Week 7 1994) | Throwback Game of the Week",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/nDaP4FGrcT8/hqdefault.jpg"
     }
   ]
 }
