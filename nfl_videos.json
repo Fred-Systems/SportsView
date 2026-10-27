@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "8lGCv70ykvo",
+      "title": "NFL Coaches React To Most Brilliant Play Calls Ever",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/8lGCv70ykvo/hqdefault.jpg"
+    },
+    {
       "id": "wPYk4r3uFkQ",
       "title": "Top 15 Plays of Week 7! | 2026 NFL Season",
       "publishedAt": "",
@@ -593,12 +599,6 @@
       "title": "McCarthy targets Nabers for a big gain, leads to a Tracy TD",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/hcmeyhaXLos/hqdefault.jpg"
-    },
-    {
-      "id": "53sGDPGYI9Q",
-      "title": "Titans pick off Watson, leads to another Pollard score!",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/53sGDPGYI9Q/hqdefault.jpg"
     }
   ]
 }
