@@ -23,6 +23,16 @@ jobs:
         with:
           gradle-version: "8.9"
 
+      # A legacy run published 1.8.6 with a throwaway key. Hide it unless a stable keystore is configured.
+      - name: Remove unusable 1.8.6 release when no stable key is configured
+        env:
+          GH_TOKEN: ${{ github.token }}
+          KEYSTORE_BASE64: ${{ secrets.SPORTSVIEW_SIGNING_KEY_BASE64 || secrets.ANDROID_SIGNING_KEY_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] && gh release view v1.8.6 >/dev/null 2>&1; then
+            gh release delete v1.8.6 --yes --cleanup-tag
+          fi
+
       # Restore the existing signing identity. Never generate a new key for an update.
       - name: Restore release signing key
         env:
