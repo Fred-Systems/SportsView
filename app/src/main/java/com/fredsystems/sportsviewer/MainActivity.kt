@@ -126,11 +126,11 @@ class MainActivity : Activity() {
         @JavascriptInterface fun checkForUpdates() {
             executor.execute {
                 try {
-                    val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsViewer/releases/latest", "application/vnd.github+json")
+                    val data = httpGet("https://api.github.com/repos/Fred-Systems/SportsView/releases/latest", "application/vnd.github+json")
                     val json = JSONObject(data)
                     val tag = json.optString("tag_name", "")
                     val name = json.optString("name", tag)
-                    val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsViewer/releases")
+                    val url = json.optString("html_url", "https://github.com/Fred-Systems/SportsView/releases")
                     val current = "v" + BuildConfig.VERSION_NAME
                     val assets = json.optJSONArray("assets") ?: JSONArray()
                     var apkUrl = ""
@@ -450,7 +450,7 @@ class MainActivity : Activity() {
         }
 
         private fun fetchNflMirror(pageToken: String?): String {
-            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
+            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsView/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
             if (source.length() <= 6 && pageToken == null) {
                 val piped = fetchPipedNfl()
                 if (piped.length() >= 15) {
@@ -470,7 +470,7 @@ class MainActivity : Activity() {
         }
 
         private fun searchNflMirror(query: String): String {
-            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsViewer/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
+            val source = JSONObject(httpGet("https://raw.githubusercontent.com/Fred-Systems/SportsView/main/nfl_videos.json")).optJSONArray("videos") ?: JSONArray()
             val base = if (source.length() <= 6) fetchPipedNfl() else source
             val filtered = JSONArray()
             val q = query.trim().lowercase()
