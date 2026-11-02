@@ -23,33 +23,32 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Create release signing key
+      # Restore the existing signing identity. Never generate a new key for an update.
+      - name: Restore release signing key
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.SPORTSVIEW_SIGNING_KEY_BASE64 || secrets.ANDROID_SIGNING_KEY_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.SPORTSVIEW_KEY_ALIAS || secrets.ANDROID_KEY_ALIAS || 'sportsview' }}
+          KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          test -n "$KEYSTORE_PASSWORD"
-          test -n "$KEY_PASSWORD"
-          keytool -genkeypair -v \
-            -keystore app/release.keystore \
-            -alias sportsview \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -keypass "$KEY_PASSWORD" \
-            -dname "CN=Fred-Systems, OU=SportsView, O=Fred-Systems, C=US"
+          test -n "$KEYSTORE_BASE64" || { echo "Missing existing signing keystore secret"; exit 1; }
+          test -n "$KEYSTORE_PASSWORD" || { echo "Missing keystore password secret"; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "Missing key password secret"; exit 1; }
+          mkdir -p app
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/release.keystore
+          test -s app/release.keystore
+          keytool -list -keystore app/release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+          echo "SPORTSVIEW_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
 
       - name: Prepare launcher icons
         run: |
           mkdir -p app/src/main/res/drawable-nodpi
           cp SportsView_icon_picture.png app/src/main/res/drawable-nodpi/sportsview_launcher.png
-          # Calculator launcher currently uses the committed vector resource; the exact uploaded PNG is not present in this repository yet.
 
       - name: Build signed release APK
         env:
-          SPORTSVIEW_KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD }}
-          SPORTSVIEW_KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD }}
+          SPORTSVIEW_KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SPORTSVIEW_KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
 
       - name: Verify release APK
@@ -73,16 +72,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)
+          APK="app/build/outputs/apk/release/app-release.apk"
           test -n "$VERSION"
+          test -s "$APK"
           TAG="v$VERSION"
           echo "Publishing SportsView $TAG"
-
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists; replacing APK."
-            gh release upload "$TAG" app/build/outputs/apk/release/app-release.apk --clobber
+            gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" app/build/outputs/apk/release/app-release.apk \
-              --title "SportsView $VERSION" \
-              --notes "SportsView $VERSION" \
-              --latest
+            gh release create "$TAG" "$APK" --title "SportsView $VERSION" --notes "SportsView $VERSION" --latest
           fi
