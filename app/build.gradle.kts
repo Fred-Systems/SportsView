@@ -11,8 +11,8 @@ android {
         applicationId = "com.fredsystems.sportsviewer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.8.5"
+        versionCode = 14
+        versionName = "1.8.6"
     }
 
     compileOptions {
@@ -28,7 +28,7 @@ android {
         create("release") {
             storeFile = file("release.keystore")
             storePassword = System.getenv("SPORTSVIEW_KEYSTORE_PASSWORD") ?: error("SPORTSVIEW_KEYSTORE_PASSWORD is missing")
-            keyAlias = "sportsview"
+            keyAlias = System.getenv("SPORTSVIEW_KEY_ALIAS") ?: "sportsview"
             keyPassword = System.getenv("SPORTSVIEW_KEY_PASSWORD") ?: error("SPORTSVIEW_KEY_PASSWORD is missing")
         }
     }
