@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -p app
           STORE_PASS="$(openssl rand -hex 24)"
-          KEY_PASS="$(openssl rand -hex 24)"
+          KEY_PASS="$STORE_PASS"
           keytool -genkeypair -v \
             -keystore app/release.keystore \
             -alias sportsview \
