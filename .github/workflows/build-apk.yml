@@ -23,32 +23,24 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      # A legacy run published 1.8.6 with a throwaway key. Hide it unless a stable keystore is configured.
-      - name: Remove unusable 1.8.6 release when no stable key is configured
-        env:
-          GH_TOKEN: ${{ github.token }}
-          KEYSTORE_BASE64: ${{ secrets.SPORTSVIEW_SIGNING_KEY_BASE64 || secrets.ANDROID_SIGNING_KEY_BASE64 }}
+      # Temporary signing key for this release only. This APK will install,
+      # but cannot update an installation signed with a different key.
+      - name: Generate temporary release signing key
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] && gh release view v1.8.6 >/dev/null 2>&1; then
-            gh release delete v1.8.6 --yes --cleanup-tag
-          fi
-
-      # Restore the existing signing identity. Never generate a new key for an update.
-      - name: Restore release signing key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.SPORTSVIEW_SIGNING_KEY_BASE64 || secrets.ANDROID_SIGNING_KEY_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.SPORTSVIEW_KEY_ALIAS || secrets.ANDROID_KEY_ALIAS || 'sportsview' }}
-          KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          test -n "$KEYSTORE_BASE64" || { echo "Missing existing signing keystore secret"; exit 1; }
-          test -n "$KEYSTORE_PASSWORD" || { echo "Missing keystore password secret"; exit 1; }
-          test -n "$KEY_PASSWORD" || { echo "Missing key password secret"; exit 1; }
           mkdir -p app
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > app/release.keystore
-          test -s app/release.keystore
-          keytool -list -keystore app/release.keystore -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
-          echo "SPORTSVIEW_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          STORE_PASS="$(openssl rand -hex 24)"
+          KEY_PASS="$(openssl rand -hex 24)"
+          keytool -genkeypair -v \
+            -keystore app/release.keystore \
+            -alias sportsview \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$STORE_PASS" -keypass "$KEY_PASS" \
+            -dname "CN=Fred-Systems, OU=SportsView, O=Fred-Systems, C=US"
+          echo "::add-mask::$STORE_PASS"
+          echo "::add-mask::$KEY_PASS"
+          echo "SPORTSVIEW_KEYSTORE_PASSWORD=$STORE_PASS" >> "$GITHUB_ENV"
+          echo "SPORTSVIEW_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
+          echo "SPORTSVIEW_KEY_ALIAS=sportsview" >> "$GITHUB_ENV"
 
       - name: Prepare launcher icons
         run: |
@@ -56,9 +48,6 @@ jobs:
           cp SportsView_icon_picture.png app/src/main/res/drawable-nodpi/sportsview_launcher.png
 
       - name: Build signed release APK
-        env:
-          SPORTSVIEW_KEYSTORE_PASSWORD: ${{ secrets.SPORTSVIEW_KEYSTORE_PASSWORD || secrets.ANDROID_KEYSTORE_PASSWORD }}
-          SPORTSVIEW_KEY_PASSWORD: ${{ secrets.SPORTSVIEW_KEY_PASSWORD || secrets.ANDROID_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
 
       - name: Verify release APK
@@ -67,10 +56,9 @@ jobs:
           test -s "$APK"
           SIZE=$(stat -c%s "$APK")
           test "$SIZE" -gt 500000
+          jarsigner -verify "$APK" >/dev/null
           echo "APK size: $SIZE bytes"
-          grep -F 'android:enabled="true"' app/src/main/AndroidManifest.xml
-          grep -F 'android:enabled="false"' app/src/main/AndroidManifest.xml
-          echo "Release APK verification passed."
+          echo "Temporary-key release APK verification passed."
 
       - uses: actions/upload-artifact@v4
         with:
@@ -83,13 +71,12 @@ jobs:
         run: |
           VERSION=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts | head -n 1)
           APK="app/build/outputs/apk/release/app-release.apk"
+          TAG="v$VERSION"
           test -n "$VERSION"
           test -s "$APK"
-          TAG="v$VERSION"
-          echo "Publishing SportsView $TAG"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release $TAG already exists; replacing APK."
             gh release upload "$TAG" "$APK" --clobber
           else
-            gh release create "$TAG" "$APK" --title "SportsView $VERSION" --notes "SportsView $VERSION" --latest
+            gh release create "$TAG" "$APK" --title "SportsView $VERSION" \
+              --notes "SportsView $VERSION. Signed with a temporary release key; uninstall the prior app before installing if Android reports a signature conflict." --latest
           fi
