@@ -1,6 +1,24 @@
 {
   "videos": [
     {
+      "id": "CapLQ-ezW9A",
+      "title": "NFL Rookie Report: Who's Living Up to the Hype? | 40s and Free Agents",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/CapLQ-ezW9A/hqdefault.jpg"
+    },
+    {
+      "id": "PG_JsBKTo4c",
+      "title": "Week 8 Mic'd Up! \"I’m Playing Backyard Football\" | Game Day All Access",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/PG_JsBKTo4c/hqdefault.jpg"
+    },
+    {
+      "id": "F24HRG_qk-U",
+      "title": "Week 9 NFL Pro Game Picks + Confidence Rankings",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/F24HRG_qk-U/hqdefault.jpg"
+    },
+    {
       "id": "wRGsh9mDLds",
       "title": "Tampa Bay Buccaneers vs Chicago Bears | 2026 Week 9 Game Preview",
       "publishedAt": "",
@@ -116,7 +134,7 @@
     },
     {
       "id": "RxymxuuIyvA",
-      "title": "3 Rounds to Prove I Can Catch Like an NFL Pro | NFL R2EZ powered by Verizon",
+      "title": "Each Catch Gets Harder Than the Last (NFL Defense Training) | NFL R2EZ powered by Verizon",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/RxymxuuIyvA/hqdefault.jpg"
     },
@@ -128,7 +146,7 @@
     },
     {
       "id": "Pmt8O11vz8g",
-      "title": "Greatest Walk-Off Touchdowns in NFL History | NFL Reacts",
+      "title": "NFL Stars React to Craziest Last-Second TDs Ever",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/Pmt8O11vz8g/hqdefault.jpg"
     },
@@ -581,24 +599,6 @@
       "title": "Cleveland Browns vs. Pittsburgh Steelers Game Highlights | NFL 2026 Week 8",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/_tkkFK0248w/hqdefault.jpg"
-    },
-    {
-      "id": "R7zUguz0Aag",
-      "title": "Indianapolis Colts vs. Jacksonville Jaguars Game Highlights | NFL 2026 Week 8",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/R7zUguz0Aag/hqdefault.jpg"
-    },
-    {
-      "id": "CLDw7Is07X4",
-      "title": "CODE RED FOR THE JETS IN NEW YORK? Raiders vs Jets Week 8 Ending",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/CLDw7Is07X4/hqdefault.jpg"
-    },
-    {
-      "id": "lSgvltstdb4",
-      "title": "Can The Vikings Keep Their 0? Vikings vs Lions Week 8 Ending",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/lSgvltstdb4/hqdefault.jpg"
     }
   ]
 }
