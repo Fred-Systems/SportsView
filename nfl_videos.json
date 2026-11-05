@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "_t157XhHYEE",
+      "title": "The NFL Report: New Faces, New Places! + Gregg Rosenthal Joins the Show",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/_t157XhHYEE/hqdefault.jpg"
+    },
+    {
       "id": "CapLQ-ezW9A",
       "title": "NFL Rookie Report: Who's Living Up to the Hype? | 40s and Free Agents",
       "publishedAt": "",
@@ -134,7 +140,7 @@
     },
     {
       "id": "RxymxuuIyvA",
-      "title": "Each Catch Gets Harder Than the Last (NFL Defense Training) | NFL R2EZ powered by Verizon",
+      "title": "3 Rounds to Prove I Can Catch Like an NFL Pro | NFL R2EZ powered by Verizon",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/RxymxuuIyvA/hqdefault.jpg"
     },
@@ -146,7 +152,7 @@
     },
     {
       "id": "Pmt8O11vz8g",
-      "title": "NFL Stars React to Craziest Last-Second TDs Ever",
+      "title": "Greatest Walk-Off Touchdowns in NFL History | NFL Reacts",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/Pmt8O11vz8g/hqdefault.jpg"
     },
@@ -593,12 +599,6 @@
       "title": "Every Harold Fannin Jr. catch from 154-yard game vs. Steelers | Week 8",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/GbzWt5dwO30/hqdefault.jpg"
-    },
-    {
-      "id": "_tkkFK0248w",
-      "title": "Cleveland Browns vs. Pittsburgh Steelers Game Highlights | NFL 2026 Week 8",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/_tkkFK0248w/hqdefault.jpg"
     }
   ]
 }
