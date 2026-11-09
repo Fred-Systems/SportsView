@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "AzasEB4aZ_c",
+      "title": "Top Plays at Midseason! | 2026 NFL Season",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/AzasEB4aZ_c/hqdefault.jpg"
+    },
+    {
       "id": "nLhBgyh146k",
       "title": "Buccaneers vs. Bears Week 9 SNF Recap | NFL Daily",
       "publishedAt": "",
@@ -593,12 +599,6 @@
       "title": "The NFL Report: More Week 9 QB Changes + Most Surprising Players at Midseason",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/7RaNz5994PY/hqdefault.jpg"
-    },
-    {
-      "id": "MaGrmjWauqo",
-      "title": "Bills vs. Vikings Week 9 MNF Preview | NFL Daily",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/MaGrmjWauqo/hqdefault.jpg"
     }
   ]
 }
