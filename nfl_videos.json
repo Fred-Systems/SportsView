@@ -1,8 +1,14 @@
 {
   "videos": [
     {
+      "id": "teB5v-rDpRE",
+      "title": "Glue Guy? Secret SUPERSTAR? | NFL Pro Midseason Awards",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/teB5v-rDpRE/hqdefault.jpg"
+    },
+    {
       "id": "d3dLSAaDaVM",
-      "title": "Does he actually deserve MVP? | NFL Pro Midseason Awards",
+      "title": "He’s on pace for the best season ever | NFL Pro Midseason Awards",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/d3dLSAaDaVM/hqdefault.jpg"
     },
@@ -164,7 +170,7 @@
     },
     {
       "id": "2gnGA3FqW3Q",
-      "title": "I Tried Training Like Groot (Bad Idea) | NFL R2EZ powered by Verizon",
+      "title": "I Tried Training Like an NFL Linebacker (Bad Idea) | NFL R2EZ powered by Verizon",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/2gnGA3FqW3Q/hqdefault.jpg"
     },
@@ -593,12 +599,6 @@
       "title": "Stafford and Puka connect for a Rams' TD!",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/dDMGE3Vj2No/hqdefault.jpg"
-    },
-    {
-      "id": "hNDG02OZews",
-      "title": "WINSTON CONNECTS WITH LIKELY FOR A TD",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/hNDG02OZews/hqdefault.jpg"
     }
   ]
 }
