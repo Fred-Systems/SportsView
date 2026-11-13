@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "vZ7OziskKzo",
+      "title": "Kevin Patra’s MVP Leaderboard entering Week 10",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/vZ7OziskKzo/hqdefault.jpg"
+    },
+    {
       "id": "vW-G-xImq3c",
       "title": "Full Week 10 Game Previews | 2026 Season",
       "publishedAt": "",
@@ -38,7 +44,7 @@
     },
     {
       "id": "rXR5QIMnTZE",
-      "title": "LISTEN TO THIS WITH YOUR SOUND ON LOL",
+      "title": "Did he really just say that ??",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/rXR5QIMnTZE/hqdefault.jpg"
     },
@@ -68,13 +74,13 @@
     },
     {
       "id": "teB5v-rDpRE",
-      "title": "Who is the SECRET SUPERSTAR? | NFL Pro Midseason Awards",
+      "title": "Glue Guy? Secret SUPERSTAR? | NFL Pro Midseason Awards",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/teB5v-rDpRE/hqdefault.jpg"
     },
     {
       "id": "d3dLSAaDaVM",
-      "title": "He’s on pace for the best season ever | NFL Pro Midseason Awards",
+      "title": "Does he actually deserve MVP? | NFL Pro Midseason Awards",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/d3dLSAaDaVM/hqdefault.jpg"
     },
@@ -236,7 +242,7 @@
     },
     {
       "id": "2gnGA3FqW3Q",
-      "title": "I Tried Training Like Groot (Bad Idea) | NFL R2EZ powered by Verizon",
+      "title": "I Tried Training Like an NFL Linebacker (Bad Idea) | NFL R2EZ powered by Verizon",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/2gnGA3FqW3Q/hqdefault.jpg"
     },
@@ -593,12 +599,6 @@
       "title": "Cleveland Browns vs. New Orleans Saints Game Highlights | 2026 NFL Season Week 9",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/yidVkmPmxcU/hqdefault.jpg"
-    },
-    {
-      "id": "N9qwPsA9FI0",
-      "title": "Los Angeles Rams vs. Washington Commanders Game Highlights | NFL 2026 Season Week 9",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/N9qwPsA9FI0/hqdefault.jpg"
     }
   ]
 }
