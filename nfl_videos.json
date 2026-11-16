@@ -1,6 +1,12 @@
 {
   "videos": [
     {
+      "id": "GJvr-3meJhs",
+      "title": "Steelers vs. Bengals Week 10 SNF Recap | NFL Daily",
+      "publishedAt": "",
+      "thumbnail": "https://i.ytimg.com/vi/GJvr-3meJhs/hqdefault.jpg"
+    },
+    {
       "id": "oEWzIE47H7Q",
       "title": "Patriots vs. Lions Week 10 Recap | NFL Daily",
       "publishedAt": "",
@@ -530,7 +536,7 @@
     },
     {
       "id": "d3dLSAaDaVM",
-      "title": "He’s on pace for the best season ever | NFL Pro Midseason Awards",
+      "title": "Does he actually deserve MVP? | NFL Pro Midseason Awards",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/d3dLSAaDaVM/hqdefault.jpg"
     },
@@ -593,12 +599,6 @@
       "title": "Houston Texans vs Cleveland Browns | 2026 Week 10 Game Preview",
       "publishedAt": "",
       "thumbnail": "https://i.ytimg.com/vi/frtoOyUCdHg/hqdefault.jpg"
-    },
-    {
-      "id": "q4e3D7kfCME",
-      "title": "Los Angeles Rams vs Arizona Cardinals | 2026 Week 10 Game Preview",
-      "publishedAt": "",
-      "thumbnail": "https://i.ytimg.com/vi/q4e3D7kfCME/hqdefault.jpg"
     }
   ]
 }
